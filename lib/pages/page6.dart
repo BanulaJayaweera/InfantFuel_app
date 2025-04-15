@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'page3.dart'; // Import LoginScreen for navigation
+import 'dashboard_screen.dart'; // Import DashboardScreen for navigation
 
 class BabyDetailsScreen extends StatefulWidget {
   const BabyDetailsScreen({super.key});
@@ -116,8 +117,11 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
       print('Blood Group: ${_bloodGroupController.text}');
       print('Birth Place: ${_birthPlaceController.text}');
 
-      // Navigate to the next screen (to be implemented)
-      // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => NextScreen()));
+      // Navigate to DashboardScreen
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
     } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select the date of birth')),
@@ -135,9 +139,9 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Curved background shape (matching SignupScreen, ParentRegistrationScreen, and HealthcareRegistrationScreen)
+            // Curved background shape (matching SignupScreen, ParentRegistrationScreen, etc.)
             Positioned(
-              top: 200,
+              top: 210,
               left: 0,
               right: 0,
               child: Container(
@@ -277,7 +281,7 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
                           TextFormField(
                             controller: _weightController,
                             decoration: InputDecoration(
-                              hintText: 'Weight at birth (kg)',
+                              hintText: 'Weight at birth',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
@@ -292,7 +296,7 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
                           TextFormField(
                             controller: _heightController,
                             decoration: InputDecoration(
-                              hintText: 'Height at birth (cm)',
+                              hintText: 'Height at birth',
                               filled: true,
                               fillColor: Colors.white,
                               border: OutlineInputBorder(
