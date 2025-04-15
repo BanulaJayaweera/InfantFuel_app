@@ -97,7 +97,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+
                   // Recent Activity Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),

@@ -61,6 +61,7 @@ flutter:
   assets:
     - images/logo.png
     - images/dashboard.png
+    - images/weight_graph.png
  
 
   # An image asset can refer to one or more resolution-specific "variants", see

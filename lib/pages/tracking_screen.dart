@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'weight_tracking_screen.dart';
 
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
 
   // Placeholder functions for button clicks
-  void _onWeightTapped() {
-    print('Navigate to Weight Tracking Screen (to be implemented)');
+  void _onWeightTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const WeightTrackingScreen()),
+    );
   }
 
   void _onHeightTapped() {
@@ -63,12 +67,12 @@ class TrackingScreen extends StatelessWidget {
                 children: [
                   // Logo
                   Padding(
-                    padding: const EdgeInsets.only(top: 50.0),
+                    padding: const EdgeInsets.fromLTRB(0, 50.0, 300.0, 8.0),
                     child: Column(
                       children: [
                         Container(
-                          width: 150,
-                          height: 80,
+                          width: 200,
+                          height: 100,
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(10),
@@ -83,7 +87,7 @@ class TrackingScreen extends StatelessWidget {
                           ),
                           child: Padding(
                             padding: const EdgeInsets.fromLTRB(
-                              50.0,
+                              10.0,
                               8.0,
                               8.0,
                               8.0,
@@ -94,7 +98,7 @@ class TrackingScreen extends StatelessWidget {
                               errorBuilder: (context, error, stackTrace) {
                                 return const Icon(
                                   Icons.error,
-                                  size: 150,
+                                  size: 200,
                                   color: Colors.red,
                                 );
                               },
@@ -105,19 +109,35 @@ class TrackingScreen extends StatelessWidget {
                     ),
                   ),
                   // Title
-                  const Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 30.0,
-                      vertical: 10.0,
-                    ),
-                    child: Text(
-                      "Tracking",
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(230, 0.0, 10.0, 8.0),
+                    child: Container(
+                      padding: const EdgeInsets.all(16.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withAlpha(51),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: const Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "Tracking",
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
                   ),
+                  const SizedBox(height: 50),
                   // Growth Tracking Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -158,7 +178,7 @@ class TrackingScreen extends StatelessWidget {
                             // Weight Button
                             Expanded(
                               child: GestureDetector(
-                                onTap: _onWeightTapped,
+                                onTap: () => _onWeightTapped(context),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
@@ -443,6 +463,7 @@ class TrackingScreen extends StatelessWidget {
             label: 'Settings',
           ),
         ],
+        type: BottomNavigationBarType.fixed,
         currentIndex: 1, // Statistics tab is active
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
@@ -450,9 +471,9 @@ class TrackingScreen extends StatelessWidget {
           if (index == 0) {
             Navigator.pop(context); // Go back to DashboardScreen
           } else if (index == 2) {
-            print('Navigate to Favorites Screen (to be implemented)');
+            debugPrint('Navigate to Favorites Screen (to be implemented)');
           } else if (index == 3) {
-            print('Navigate to Settings Screen (to be implemented)');
+            debugPrint('Navigate to Settings Screen (to be implemented)');
           }
         },
       ),
