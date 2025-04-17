@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class WeightTrackingScreen extends StatelessWidget {
-  const WeightTrackingScreen({super.key});
+class HeadTrackingScreen extends StatelessWidget {
+  const HeadTrackingScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +109,7 @@ class WeightTrackingScreen extends StatelessWidget {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Weight tracking",
+                        "Head circumference tracking",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -143,7 +143,7 @@ class WeightTrackingScreen extends StatelessWidget {
                               Text("At birth", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "2.000kg",
+                                "20cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -180,7 +180,7 @@ class WeightTrackingScreen extends StatelessWidget {
                               Text("Current", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "4.000kg",
+                                "25cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -217,7 +217,7 @@ class WeightTrackingScreen extends StatelessWidget {
                               Text("Change", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "2.000kg",
+                                "5cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -234,7 +234,7 @@ class WeightTrackingScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Image.asset(
-                      'images/weight_graph.png',
+                      'images/head_graph.png',
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return const Icon(

@@ -62,8 +62,8 @@ flutter:
     - images/logo.png
     - images/dashboard.png
     - images/weight_graph.png
- 
-
+    - images/height_graph.png
+    - images/head_graph.png
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 
