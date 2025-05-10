@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'weight_tracking_screen.dart';
 import 'height_tracking_screen.dart';
 import 'head_tracking_screen.dart';
+import 'breastfeeding_screen.dart';
+import 'fluids_tracking_screen.dart';
 
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
@@ -28,12 +30,20 @@ class TrackingScreen extends StatelessWidget {
     );
   }
 
-  void _onBreastfeedingTapped() {
-    print('Navigate to Breastfeeding Tracking Screen (to be implemented)');
+  void _onBreastfeedingTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const BreastfeedingTrackingScreen(),
+      ),
+    );
   }
 
-  void _onFluidsTapped() {
-    print('Navigate to Fluids Tracking Screen (to be implemented)');
+  void _onFluidsTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const FluidsTrackingScreen()),
+    );
   }
 
   void _onSolidsTapped() {
@@ -338,7 +348,7 @@ class TrackingScreen extends StatelessWidget {
                             // Breastfeeding Button
                             Expanded(
                               child: GestureDetector(
-                                onTap: _onBreastfeedingTapped,
+                                onTap: () => _onBreastfeedingTapped(context),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
@@ -375,7 +385,7 @@ class TrackingScreen extends StatelessWidget {
                             // Fluids Button
                             Expanded(
                               child: GestureDetector(
-                                onTap: _onFluidsTapped,
+                                onTap: () => _onFluidsTapped(context),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
