@@ -4,86 +4,94 @@ import 'health_screen.dart';
 import 'dashboard_screen.dart';
 import 'extras.dart';
 
-class FluidsTrackingScreen extends StatefulWidget {
-  const FluidsTrackingScreen({super.key});
+class MedicationScreen extends StatefulWidget {
+  const MedicationScreen({super.key});
 
   @override
-  State<FluidsTrackingScreen> createState() => _FluidsTrackingScreenState();
+  State<MedicationScreen> createState() => _MedicationScreenState();
 }
 
-class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
+class _MedicationScreenState extends State<MedicationScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _selectedFluid;
-  final _volumeController = TextEditingController();
-  DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
+  final _sicknessController = TextEditingController();
+  int _selectedDays = 1; // Default time period in days
   final _notesController = TextEditingController();
 
-  final List<String> _fluidOptions = ['Water', 'Milk'];
-
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2020),
-      lastDate: DateTime.now(),
+  Future<void> _selectPhoto() async {
+    // Placeholder for photo upload functionality
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Photo upload feature to be implemented')),
     );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+  void _selectDays(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context) {
+        return Container(
+          height: 200,
+          child: Row(
+            children: [
+              Expanded(
+                child: ListWheelScrollView.useDelegate(
+                  itemExtent: 50,
+                  onSelectedItemChanged: (index) {
+                    setState(() {
+                      _selectedDays = index + 1; // 1 to 30 days
+                    });
+                  },
+                  childDelegate: ListWheelChildBuilderDelegate(
+                    childCount: 30, // 1 to 30 days
+                    builder: (context, index) {
+                      return Center(
+                        child: Text(
+                          '${index + 1} day${index == 0 ? '' : 's'}',
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Done',
+                  style: TextStyle(fontSize: 18, color: Color(0xFF6A5ACD)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
   }
 
-  void _handleSaveFeed() {
+  void _handleSaveMedicine() {
     if (_formKey.currentState!.validate() &&
-        _selectedFluid != null &&
-        _selectedDate != null &&
-        _selectedTime != null) {
+        _sicknessController.text.isNotEmpty) {
       // Form is valid, proceed with saving
-      print('Fluid Type: $_selectedFluid');
-      print('Volume: ${_volumeController.text} ml');
-      print('Date: $_selectedDate');
-      print('Time: ${_selectedTime!.format(context)}');
+      print('Sickness: ${_sicknessController.text}');
+      print('Time Period: $_selectedDays day${_selectedDays == 1 ? '' : 's'}');
       print('Notes: ${_notesController.text}');
 
-      // Show confirmation and navigate back to TrackingScreen
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Feed saved successfully')));
-      Navigator.pop(context);
+      // Show confirmation and navigate back to HealthScreen
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Medicine saved successfully')),
+      );
+      Navigator.pop(context); // Navigate back to HealthScreen
     } else {
-      if (_selectedFluid == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a fluid type')),
-        );
-      } else if (_selectedDate == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a date')));
-      } else if (_selectedTime == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a time')));
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter the sickness')),
+      );
     }
   }
 
   @override
   void dispose() {
-    _volumeController.dispose();
+    _sicknessController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -170,7 +178,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                             ],
                           ),
                           child: const Text(
-                            "Tracking\nFluids",
+                            "Health\nMedication",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 32,
@@ -206,44 +214,34 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Fluid Type Dropdown
+                            // Add a Photo
                             const Text(
-                              "Type of Fluid",
+                              "Add a photo",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            DropdownButtonFormField<String>(
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
+                            GestureDetector(
+                              onTap: _selectPhoto,
+                              child: Container(
+                                padding: const EdgeInsets.all(20.0),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 5,
+                                child: const Icon(
+                                  Icons.add_a_photo,
+                                  color: Color(0xFF6A5ACD),
+                                  size: 40,
                                 ),
                               ),
-                              hint: const Text('Select Fluid Type'),
-                              value: _selectedFluid,
-                              items:
-                                  _fluidOptions.map((String fluid) {
-                                    return DropdownMenuItem<String>(
-                                      value: fluid,
-                                      child: Text(fluid),
-                                    );
-                                  }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedFluid = newValue;
-                                });
-                              },
                             ),
                             const SizedBox(height: 20),
-                            // Volume Input
+                            // Sickness Input
                             const Text(
-                              "Volume (ml)",
+                              "Sickness",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -251,13 +249,11 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                             ),
                             const SizedBox(height: 10),
                             TextFormField(
-                              controller: _volumeController,
-                              keyboardType: TextInputType.number,
+                              controller: _sicknessController,
                               decoration: InputDecoration(
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                hintText: 'Enter volume in ml',
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 15,
@@ -265,18 +261,15 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                               ),
                               validator: (value) {
                                 if (value == null || value.isEmpty) {
-                                  return 'Please enter the volume';
-                                }
-                                if (double.tryParse(value) == null) {
-                                  return 'Please enter a valid number';
+                                  return 'Please enter the sickness';
                                 }
                                 return null;
                               },
                             ),
                             const SizedBox(height: 20),
-                            // Date Picker
+                            // Time Period Picker
                             const Text(
-                              "Date",
+                              "Time period",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -284,7 +277,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                             ),
                             const SizedBox(height: 10),
                             GestureDetector(
-                              onTap: () => _selectDate(context),
+                              onTap: () => _selectDays(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
@@ -299,58 +292,12 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                                       MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
-                                      _selectedDate == null
-                                          ? 'Select Date'
-                                          : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
-                                      style: TextStyle(
-                                        color:
-                                            _selectedDate == null
-                                                ? Colors.grey
-                                                : Colors.black,
+                                      '$_selectedDays day${_selectedDays == 1 ? '' : 's'}',
+                                      style: const TextStyle(
+                                        color: Colors.black,
                                       ),
                                     ),
-                                    const Icon(Icons.calendar_today),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            // Time Picker
-                            const Text(
-                              "Time",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            GestureDetector(
-                              onTap: () => _selectTime(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 15,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _selectedTime == null
-                                          ? 'Select Time'
-                                          : _selectedTime!.format(context),
-                                      style: TextStyle(
-                                        color:
-                                            _selectedTime == null
-                                                ? Colors.grey
-                                                : Colors.black,
-                                      ),
-                                    ),
-                                    const Icon(Icons.access_time),
+                                    const Icon(Icons.arrow_drop_down),
                                   ],
                                 ),
                               ),
@@ -384,14 +331,14 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                       ),
                     ),
                   ),
-                  // Save Feed Button
+                  // Save Medicine Button
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30.0,
                       vertical: 20.0,
                     ),
                     child: ElevatedButton(
-                      onPressed: _handleSaveFeed,
+                      onPressed: _handleSaveMedicine,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6A5ACD),
                         foregroundColor: Colors.white,
@@ -401,7 +348,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                         ),
                       ),
                       child: const Text(
-                        'Save Feed',
+                        'Save Medicine',
                         style: TextStyle(fontSize: 18),
                       ),
                     ),
@@ -421,20 +368,17 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
             icon: Icon(Icons.show_chart),
             label: 'Statistics',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Health'),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
-        currentIndex: 1, // Statistics tab is active
+        currentIndex: 2, // Health tab is active
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-           if (index == 0) {
+          if (index == 0) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const DashboardScreen()),

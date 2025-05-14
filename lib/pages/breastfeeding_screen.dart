@@ -357,7 +357,8 @@ class _BreastfeedingTrackingScreenState
         onTap: (index) {
           if (index == 0) {
             Navigator.pop(context); // Pop to TrackingScreen
-            Navigator.pop(context); // Pop to DashboardScreen
+          } else if (index == 1) {
+            Navigator.pop(context);
           } else if (index == 2) {
             print('Navigate to Favorites Screen (to be implemented)');
           } else if (index == 3) {

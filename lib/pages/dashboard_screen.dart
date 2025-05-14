@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'tracking_screen.dart'; // Import TrackingScreen for navigation
+import 'health_screen.dart';
+import 'extras.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -30,10 +32,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
         );
         break;
       case 2:
-        print('Navigate to Heart/Favorites Screen (to be implemented)');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const HealthScreen()),
+        );
         break;
       case 3:
-        print('Navigate to Settings Screen (to be implemented)');
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const ExtrasScreen()),
+        );
         break;
     }
   }
@@ -240,16 +248,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.show_chart),
-            label: 'Statistics',
+            label: 'Tracking',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Health'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Extras'),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: const Color(0xFF6A5ACD),

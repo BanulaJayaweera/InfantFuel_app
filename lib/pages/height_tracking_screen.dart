@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'tracking_screen.dart';
+import 'health_screen.dart';
+import 'dashboard_screen.dart';
+import 'extras.dart';
 
 class HeightTrackingScreen extends StatelessWidget {
   const HeightTrackingScreen({super.key});
@@ -274,17 +278,26 @@ class HeightTrackingScreen extends StatelessWidget {
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          if (index == 0) {
-            // Navigate back to DashboardScreen
-            Navigator.pushNamedAndRemoveUntil(
+           if (index == 0) {
+            Navigator.push(
               context,
-              '/dashboard',
-              (route) => false, // Remove all previous routes
+              MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            );
+          } else if (index == 1) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const TrackingScreen()),
             );
           } else if (index == 2) {
-            print('Navigate to Favorites Screen (to be implemented)');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HealthScreen()),
+            );
           } else if (index == 3) {
-            print('Navigate to Settings Screen (to be implemented)');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ExtrasScreen()),
+            );
           }
         },
       ),

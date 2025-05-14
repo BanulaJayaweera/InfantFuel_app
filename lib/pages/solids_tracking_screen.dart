@@ -4,22 +4,26 @@ import 'health_screen.dart';
 import 'dashboard_screen.dart';
 import 'extras.dart';
 
-class FluidsTrackingScreen extends StatefulWidget {
-  const FluidsTrackingScreen({super.key});
+class SolidsTrackingScreen extends StatefulWidget {
+  const SolidsTrackingScreen({super.key});
 
   @override
-  State<FluidsTrackingScreen> createState() => _FluidsTrackingScreenState();
+  State<SolidsTrackingScreen> createState() => _SolidsTrackingScreenState();
 }
 
-class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
+class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
   final _formKey = GlobalKey<FormState>();
-  String? _selectedFluid;
-  final _volumeController = TextEditingController();
+  String? _selectedFood;
+  int _selectedQuantity = 10; // Default quantity in grams
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
+  final _carbsController = TextEditingController();
+  final _proteinsController = TextEditingController();
+  final _fatsController = TextEditingController();
+  final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
 
-  final List<String> _fluidOptions = ['Water', 'Milk'];
+  final List<String> _foodOptions = ['Rice', 'Noodles'];
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -35,28 +39,75 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
+  
+
+  void _selectQuantity(BuildContext context) {
+    showModalBottomSheet(
       context: context,
-      initialTime: TimeOfDay.now(),
+      builder: (BuildContext context) {
+        return Container(
+          height: 200,
+          child: Row(
+            children: [
+              Expanded(
+                child: ListWheelScrollView.useDelegate(
+                  itemExtent: 50,
+                  onSelectedItemChanged: (index) {
+                    setState(() {
+                      _selectedQuantity = (index + 1) * 10; // 10g increments
+                    });
+                  },
+                  childDelegate: ListWheelChildBuilderDelegate(
+                    childCount: 20, // 10g to 200g
+                    builder: (context, index) {
+                      return Center(
+                        child: Text(
+                          '${(index + 1) * 10} g',
+                          style: const TextStyle(fontSize: 20),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  'Done',
+                  style: TextStyle(fontSize: 18, color: Color(0xFF6A5ACD)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
-    if (picked != null && picked != _selectedTime) {
-      setState(() {
-        _selectedTime = picked;
-      });
-    }
   }
 
   void _handleSaveFeed() {
     if (_formKey.currentState!.validate() &&
-        _selectedFluid != null &&
+        _selectedFood != null &&
         _selectedDate != null &&
         _selectedTime != null) {
       // Form is valid, proceed with saving
-      print('Fluid Type: $_selectedFluid');
-      print('Volume: ${_volumeController.text} ml');
+      print('Food Type: $_selectedFood');
+      print('Quantity: $_selectedQuantity g');
       print('Date: $_selectedDate');
       print('Time: ${_selectedTime!.format(context)}');
+      print(
+        'Carbs: ${_carbsController.text.isEmpty ? "0" : _carbsController.text} g',
+      );
+      print(
+        'Proteins: ${_proteinsController.text.isEmpty ? "0" : _proteinsController.text} g',
+      );
+      print(
+        'Fats: ${_fatsController.text.isEmpty ? "0" : _fatsController.text} g',
+      );
+      print(
+        'Calories: ${_caloriesController.text.isEmpty ? "0" : _caloriesController.text} kcal',
+      );
       print('Notes: ${_notesController.text}');
 
       // Show confirmation and navigate back to TrackingScreen
@@ -65,9 +116,9 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
       ).showSnackBar(const SnackBar(content: Text('Feed saved successfully')));
       Navigator.pop(context);
     } else {
-      if (_selectedFluid == null) {
+      if (_selectedFood == null) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a fluid type')),
+          const SnackBar(content: Text('Please select a food type')),
         );
       } else if (_selectedDate == null) {
         ScaffoldMessenger.of(
@@ -83,7 +134,10 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
 
   @override
   void dispose() {
-    _volumeController.dispose();
+    _carbsController.dispose();
+    _proteinsController.dispose();
+    _fatsController.dispose();
+    _caloriesController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -170,7 +224,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                             ],
                           ),
                           child: const Text(
-                            "Tracking\nFluids",
+                            "Tracking\nSolids",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontSize: 32,
@@ -206,9 +260,9 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Fluid Type Dropdown
+                            // Food Type Dropdown
                             const Text(
-                              "Type of Fluid",
+                              "Type of Food",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -225,53 +279,56 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                                   vertical: 5,
                                 ),
                               ),
-                              hint: const Text('Select Fluid Type'),
-                              value: _selectedFluid,
+                              hint: const Text('Select Food Type'),
+                              value: _selectedFood,
                               items:
-                                  _fluidOptions.map((String fluid) {
+                                  _foodOptions.map((String food) {
                                     return DropdownMenuItem<String>(
-                                      value: fluid,
-                                      child: Text(fluid),
+                                      value: food,
+                                      child: Text(food),
                                     );
                                   }).toList(),
                               onChanged: (String? newValue) {
                                 setState(() {
-                                  _selectedFluid = newValue;
+                                  _selectedFood = newValue;
                                 });
                               },
                             ),
                             const SizedBox(height: 20),
-                            // Volume Input
+                            // Quantity Picker
                             const Text(
-                              "Volume (ml)",
+                              "Quantity (g)",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _volumeController,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                hintText: 'Enter volume in ml',
-                                contentPadding: const EdgeInsets.symmetric(
+                            GestureDetector(
+                              onTap: () => _selectQuantity(context),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 15,
                                 ),
+                                decoration: BoxDecoration(
+                                  border: Border.all(color: Colors.grey),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '$_selectedQuantity g',
+                                      style: const TextStyle(
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_drop_down),
+                                  ],
+                                ),
                               ),
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter the volume';
-                                }
-                                if (double.tryParse(value) == null) {
-                                  return 'Please enter a valid number';
-                                }
-                                return null;
-                              },
                             ),
                             const SizedBox(height: 20),
                             // Date Picker
@@ -314,70 +371,127 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
                                 ),
                               ),
                             ),
+
                             const SizedBox(height: 20),
-                            // Time Picker
+                            // Manual Nutrition Input
                             const Text(
-                              "Time",
+                              "Manual Nutrition (Optional)",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 10),
-                            GestureDetector(
-                              onTap: () => _selectTime(context),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 15,
-                                ),
-                                decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      _selectedTime == null
-                                          ? 'Select Time'
-                                          : _selectedTime!.format(context),
-                                      style: TextStyle(
-                                        color:
-                                            _selectedTime == null
-                                                ? Colors.grey
-                                                : Colors.black,
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _carbsController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Carbs (g)',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
                                       ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 15,
+                                          ),
                                     ),
-                                    const Icon(Icons.access_time),
-                                  ],
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
                                 ),
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            // Notes Input
-                            const Text(
-                              "Notes (Optional)",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _proteinsController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Proteins (g)',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 15,
+                                          ),
+                                    ),
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 10),
-                            TextFormField(
-                              controller: _notesController,
-                              maxLines: 3,
-                              decoration: InputDecoration(
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _fatsController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Fats (g)',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 15,
+                                          ),
+                                    ),
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
                                 ),
-                                hintText: 'Add any notes if needed',
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 15,
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: _caloriesController,
+                                    keyboardType: TextInputType.number,
+                                    decoration: InputDecoration(
+                                      labelText: 'Calories (kcal)',
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      contentPadding:
+                                          const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                            vertical: 15,
+                                          ),
+                                    ),
+                                    validator: (value) {
+                                      if (value != null && value.isNotEmpty) {
+                                        if (double.tryParse(value) == null) {
+                                          return 'Please enter a valid number';
+                                        }
+                                      }
+                                      return null;
+                                    },
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
                           ],
                         ),
@@ -434,7 +548,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-           if (index == 0) {
+          if (index == 0) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const DashboardScreen()),

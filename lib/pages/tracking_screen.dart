@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:infantfuel_mobile/pages/health_screen.dart';
 import 'weight_tracking_screen.dart';
 import 'height_tracking_screen.dart';
 import 'head_tracking_screen.dart';
 import 'breastfeeding_screen.dart';
 import 'fluids_tracking_screen.dart';
+import 'solids_tracking_screen.dart';
+import 'extras.dart';
+import 'dashboard_screen.dart';
+
 
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
@@ -46,8 +51,11 @@ class TrackingScreen extends StatelessWidget {
     );
   }
 
-  void _onSolidsTapped() {
-    print('Navigate to Solids Tracking Screen (to be implemented)');
+  void _onSolidsTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const SolidsTrackingScreen()),
+    );
   }
 
   void _onGrowthSummaryTapped() {
@@ -421,7 +429,7 @@ class TrackingScreen extends StatelessWidget {
                             // Solids Button
                             Expanded(
                               child: GestureDetector(
-                                onTap: _onSolidsTapped,
+                                onTap: () => _onSolidsTapped(context),
                                 child: Container(
                                   padding: const EdgeInsets.all(16.0),
                                   decoration: BoxDecoration(
@@ -471,16 +479,10 @@ class TrackingScreen extends StatelessWidget {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
           BottomNavigationBarItem(
             icon: Icon(Icons.show_chart),
-            label: 'Statistics',
+            label: 'Tracking',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Health'),
+          BottomNavigationBarItem(icon: Icon(Icons.settings), label: 'Extras'),
         ],
         type: BottomNavigationBarType.fixed,
         currentIndex: 1, // Statistics tab is active
@@ -488,11 +490,20 @@ class TrackingScreen extends StatelessWidget {
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           if (index == 0) {
-            Navigator.pop(context); // Go back to DashboardScreen
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            );
           } else if (index == 2) {
-            debugPrint('Navigate to Favorites Screen (to be implemented)');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const HealthScreen()),
+            );
           } else if (index == 3) {
-            debugPrint('Navigate to Settings Screen (to be implemented)');
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ExtrasScreen()),
+            );
           }
         },
       ),
