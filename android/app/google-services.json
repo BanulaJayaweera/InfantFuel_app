@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "546190438004",
+    "project_id": "infantfuel-mobile",
+    "storage_bucket": "infantfuel-mobile.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:546190438004:android:7493d5aff4bbf17c476b21",
+        "android_client_info": {
+          "package_name": "com.example.infantfuel_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwLXfmkAydTzt2sfpLIWPU6Iip3owkQa0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
