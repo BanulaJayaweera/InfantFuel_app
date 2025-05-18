@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'page3.dart'; // Import the LoginScreen for navigation
 import 'page4.dart'; // Import the ParentRegistrationScreen for navigation
 import 'page5.dart'; // Import the HealthcareRegistrationScreen for navigation
@@ -62,29 +63,113 @@ class _SignupScreenState extends State<SignupScreen> {
     return null;
   }
 
-  // Handle registration
-  void _handleRegistration(String role) {
+  // Handle registration with Firebase Authentication
+  Future<void> _handleRegistration() async {
     if (_formKey.currentState!.validate()) {
-      // Form is valid, proceed with registration logic
-      print('Registering as $role');
-      print('Email: ${_emailController.text}');
-      print('Password: ${_passwordController.text}');
+      try {
+        // Create user with email and password using Firebase Auth
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: _passwordController.text.trim(),
+            );
 
-      if (role == 'Parent') {
-        // Navigate to ParentRegistrationScreen for Parent role
-        Navigator.push(
+        // Check if user was created successfully
+        if (userCredential.user != null) {
+          // Update the user's profile to set the role as displayName
+          await userCredential.user!.updateDisplayName('Parent');
+
+          // Optionally, reload the user to ensure the profile is updated
+          await userCredential.user!.reload();
+
+          // Navigate based on registration type
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const ParentRegistrationScreen(),
+            ),
+          );
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Registration successful!')),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        // Handle Firebase authentication errors
+        String errorMessage = 'An error occurred';
+        if (e.code == 'weak-password') {
+          errorMessage = 'The password provided is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          errorMessage = 'The account already exists for that email.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is invalid.';
+        }
+        ScaffoldMessenger.of(
           context,
-          MaterialPageRoute(
-            builder: (context) => const ParentRegistrationScreen(),
-          ),
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An unexpected error occurred')),
         );
-      } else {
-        // Navigate to HealthcareRegistrationScreen for Healthcare Provider role
-        Navigator.push(
+      }
+    }
+  }
+
+  // Handle healthcare provider registration with Firebase Authentication
+  Future<void> _handleHealthcareRegistration() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        // Create user with email and password using Firebase Auth
+        // Using a temporary password (e.g., "temp123") that the user can change later
+        UserCredential userCredential = await FirebaseAuth.instance
+            .createUserWithEmailAndPassword(
+              email: _emailController.text.trim(),
+              password: 'temp123', // Temporary password
+            );
+
+        // Check if user was created successfully
+        if (userCredential.user != null) {
+          // Update the user's profile to set the role as displayName
+          await userCredential.user!.updateDisplayName('HealthcareProvider');
+
+          // Optionally, reload the user to ensure the profile is updated
+          await userCredential.user!.reload();
+
+          // Navigate to HealthcareRegistrationScreen to complete profile
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const HealthcareRegistrationScreen(),
+            ),
+          );
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Registration successful! Please complete your profile.',
+              ),
+            ),
+          );
+        }
+      } on FirebaseAuthException catch (e) {
+        // Handle Firebase authentication errors
+        String errorMessage = 'An error occurred';
+        if (e.code == 'weak-password') {
+          errorMessage =
+              'The temporary password setup failed. Please try again.';
+        } else if (e.code == 'email-already-in-use') {
+          errorMessage = 'The account already exists for that email.';
+        } else if (e.code == 'invalid-email') {
+          errorMessage = 'The email address is invalid.';
+        }
+        ScaffoldMessenger.of(
           context,
-          MaterialPageRoute(
-            builder: (context) => const HealthcareRegistrationScreen(),
-          ),
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('An unexpected error occurred')),
         );
       }
     }
@@ -160,7 +245,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       style: TextStyle(fontSize: 18, height: 1.5),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 60),
                   // Form Fields
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -240,16 +325,14 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 50),
                   // Register Buttons
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Column(
                       children: [
                         ElevatedButton(
-                          onPressed: () {
-                            _handleRegistration('Parent');
-                          },
+                          onPressed: _handleRegistration,
                           child: const Center(
                             child: Text(
                               'Register as parent',
@@ -262,9 +345,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(height: 15),
                         ElevatedButton(
-                          onPressed: () {
-                            _handleRegistration('Healthcare Provider');
-                          },
+                          onPressed: _handleHealthcareRegistration,
                           child: const Center(
                             child: Text(
                               'Register as healthcare provider',

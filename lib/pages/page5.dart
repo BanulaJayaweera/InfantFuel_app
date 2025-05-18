@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'page3.dart'; // Import LoginScreen for navigation
+import 'healthcare_dashboard_screen.dart'; // Import HealthcareDashboardScreen for navigation
 
 class HealthcareRegistrationScreen extends StatefulWidget {
   const HealthcareRegistrationScreen({super.key});
@@ -84,7 +85,7 @@ class _HealthcareRegistrationScreenState
     return null;
   }
 
-  // Handle form submission
+  // Handle form submission and navigation
   void _handleProceed() {
     if (_formKey.currentState!.validate() &&
         _selectedDistrict != null &&
@@ -98,8 +99,18 @@ class _HealthcareRegistrationScreenState
       print('Position/Designation: ${_positionController.text}');
       print('Medical Registration Number: ${_medicalRegNumberController.text}');
 
-      // Navigate to the next screen (to be implemented)
-      // Example: Navigator.push(context, MaterialPageRoute(builder: (context) => NextScreen()));
+      // Navigate to HealthcareDashboardScreen
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const HealthcareDashboardScreen(),
+        ),
+      );
+
+      // Show success message
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Registration successful!')));
     } else if (_selectedDistrict == null) {
       ScaffoldMessenger.of(
         context,
