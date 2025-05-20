@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
+import 'vaccination_tracking_screen.dart';
+import 'healthcare_weight_screen.dart';
 
 class HealthcareDashboardScreen extends StatelessWidget {
   const HealthcareDashboardScreen({super.key});
 
   // Placeholder actions for the clickable options
-  void _onVaccineTapped() {
-    print('Navigate to Vaccine Screen (to be implemented)');
+  void _onVaccineTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const VaccinationTrackingScreen(),
+      ),
+    );
   }
 
-  void _onWeightTapped() {
-    print('Navigate to Weight Tracking Screen (to be implemented)');
+  void _onWeightTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const HealthcareWeightScreen()),
+    );
   }
 
   void _onActionsTapped() {
@@ -131,7 +141,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                       children: [
                         // Vaccine Option
                         GestureDetector(
-                          onTap: _onVaccineTapped,
+                          onTap: () => _onVaccineTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
@@ -168,7 +178,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                         ),
                         // Weight Option
                         GestureDetector(
-                          onTap: _onWeightTapped,
+                          onTap: () => _onWeightTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
@@ -187,7 +197,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                             child: Row(
                               children: [
                                 const Icon(
-                                  Icons.fitness_center,
+                                  Icons.scale,
                                   color: Color(0xFF6A5ACD),
                                   size: 40,
                                 ),
@@ -367,10 +377,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.arrow_back), label: 'back'),
         ],
         currentIndex: 0, // Dashboard tab is active
         selectedItemColor: const Color(0xFF6A5ACD),
