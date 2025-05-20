@@ -1,7 +1,10 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'pages/page1.dart'; // Import the WelcomeScreen
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
+  await Firebase.initializeApp(); // Initialize Firebase
   runApp(const InfantFuelApp());
 }
 
@@ -42,3 +45,5 @@ class InfantFuelApp extends StatelessWidget {
     );
   }
 }
+
+// this is the login page code. now when a user who has registered as a healthcare provider logins with his email and password he
