@@ -397,7 +397,7 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 70),
+                  const SizedBox(height: 10),
                 ],
               ),
             ),
