@@ -9,7 +9,6 @@ import 'solids_tracking_screen.dart';
 import 'extras.dart';
 import 'dashboard_screen.dart';
 
-
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
 
@@ -156,7 +155,7 @@ class TrackingScreen extends StatelessWidget {
                         child: Text(
                           "Tracking",
                           style: TextStyle(
-                            fontSize: 32,
+                            fontSize: 26,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -229,7 +228,7 @@ class TrackingScreen extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Weight",
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -265,7 +264,7 @@ class TrackingScreen extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Height",
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -303,7 +302,7 @@ class TrackingScreen extends StatelessWidget {
                                       const Text(
                                         "Head\ncircumference",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 11.5),
                                       ),
                                     ],
                                   ),
@@ -315,7 +314,7 @@ class TrackingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 40),
                   // Nutrition Tracking Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -382,7 +381,7 @@ class TrackingScreen extends StatelessWidget {
                                       const Text(
                                         "Breastfeeding",
                                         textAlign: TextAlign.center,
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -418,7 +417,7 @@ class TrackingScreen extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Fluids",
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -454,7 +453,7 @@ class TrackingScreen extends StatelessWidget {
                                       const SizedBox(height: 10),
                                       const Text(
                                         "Solids",
-                                        style: TextStyle(fontSize: 16),
+                                        style: TextStyle(fontSize: 12),
                                       ),
                                     ],
                                   ),
@@ -466,7 +465,7 @@ class TrackingScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 70),
+                  const SizedBox(height: 130),
                 ],
               ),
             ),

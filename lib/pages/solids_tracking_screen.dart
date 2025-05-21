@@ -16,7 +16,6 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
   String? _selectedFood;
   int _selectedQuantity = 10; // Default quantity in grams
   DateTime? _selectedDate;
-  TimeOfDay? _selectedTime;
   final _carbsController = TextEditingController();
   final _proteinsController = TextEditingController();
   final _fatsController = TextEditingController();
@@ -38,8 +37,6 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
       });
     }
   }
-
-  
 
   void _selectQuantity(BuildContext context) {
     showModalBottomSheet(
@@ -89,13 +86,11 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
   void _handleSaveFeed() {
     if (_formKey.currentState!.validate() &&
         _selectedFood != null &&
-        _selectedDate != null &&
-        _selectedTime != null) {
+        _selectedDate != null) {
       // Form is valid, proceed with saving
       print('Food Type: $_selectedFood');
       print('Quantity: $_selectedQuantity g');
       print('Date: $_selectedDate');
-      print('Time: ${_selectedTime!.format(context)}');
       print(
         'Carbs: ${_carbsController.text.isEmpty ? "0" : _carbsController.text} g',
       );
@@ -124,10 +119,6 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Please select a date')));
-      } else if (_selectedTime == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a time')));
       }
     }
   }
@@ -227,7 +218,7 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                             "Tracking\nSolids",
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 32,
+                              fontSize: 27,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -371,7 +362,6 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 20),
                             // Manual Nutrition Input
                             const Text(

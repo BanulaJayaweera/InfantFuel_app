@@ -180,7 +180,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(fontSize: 18, height: 1.5),
                     ),
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 120),
                   // Form Fields
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -254,7 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 90),
                   // Login Button
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
@@ -291,7 +291,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
