@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'page3.dart'; // Import LoginScreen for navigation
 import 'healthcare_dashboard_screen.dart'; // Import HealthcareDashboardScreen for navigation
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import at the top
 
 class HealthcareRegistrationScreen extends StatefulWidget {
   const HealthcareRegistrationScreen({super.key});
@@ -86,31 +87,44 @@ class _HealthcareRegistrationScreenState
   }
 
   // Handle form submission and navigation
-  void _handleProceed() {
+  Future<void> _handleProceed() async {
     if (_formKey.currentState!.validate() &&
         _selectedDistrict != null &&
         _selectedGramaNiladhari != null) {
       // Form is valid, proceed with submission
-      print('Full Name: ${_fullNameController.text}');
-      print('District: $_selectedDistrict');
-      print('Grama Niladhari Division: $_selectedGramaNiladhari');
-      print('Contact Number: ${_contactNumberController.text}');
-      print('Workplace Address: ${_workplaceAddressController.text}');
-      print('Position/Designation: ${_positionController.text}');
-      print('Medical Registration Number: ${_medicalRegNumberController.text}');
 
-      // Navigate to HealthcareDashboardScreen
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HealthcareDashboardScreen(),
-        ),
-      );
+      // Store data in Firestore under 'healthcare provider details' collection
+      try {
+        await FirebaseFirestore.instance
+            .collection('healthcare provider details')
+            .add({
+              'fullName': _fullNameController.text.trim(),
+              'district': _selectedDistrict,
+              'gramaNiladhariDivision': _selectedGramaNiladhari,
+              'contactNumber': _contactNumberController.text.trim(),
+              'workplaceAddress': _workplaceAddressController.text.trim(),
+              'position': _positionController.text.trim(),
+              'medicalRegNumber': _medicalRegNumberController.text.trim(),
+              'createdAt': FieldValue.serverTimestamp(),
+            });
 
-      // Show success message
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Registration successful!')));
+        // Navigate to HealthcareDashboardScreen
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HealthcareDashboardScreen(),
+          ),
+        );
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Registration successful!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to register: $e')));
+      }
     } else if (_selectedDistrict == null) {
       ScaffoldMessenger.of(
         context,
@@ -331,7 +345,7 @@ class _HealthcareRegistrationScreenState
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: ElevatedButton(
-                      onPressed: _handleProceed,
+                      onPressed: () => _handleProceed(),
                       child: const Center(
                         child: Text(
                           'Proceed',
