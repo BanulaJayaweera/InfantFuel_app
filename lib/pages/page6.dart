@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import at the top
 import 'page3.dart'; // Import LoginScreen for navigation
 import 'dashboard_screen.dart'; // Import DashboardScreen for navigation
 
@@ -104,24 +105,35 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
   }
 
   // Handle form submission
-  void _handleProceed() {
+  Future<void> _handleProceed() async {
     if (_formKey.currentState!.validate() &&
         _selectedDate != null &&
         _selectedGender != null) {
       // Form is valid, proceed with submission
-      print('Baby\'s Name: ${_babyNameController.text}');
-      print('Date of Birth: ${_selectedDate.toString()}');
-      print('Gender: $_selectedGender');
-      print('Weight at Birth: ${_weightController.text}');
-      print('Height at Birth: ${_heightController.text}');
-      print('Blood Group: ${_bloodGroupController.text}');
-      print('Birth Place: ${_birthPlaceController.text}');
 
-      // Navigate to DashboardScreen
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
+      // Store data in Firestore under 'baby details' collection
+      try {
+        await FirebaseFirestore.instance.collection('baby details').add({
+          'babyName': _babyNameController.text.trim(),
+          'dateOfBirth': _selectedDate!.toIso8601String(),
+          'gender': _selectedGender,
+          'weightAtBirth': _weightController.text.trim(),
+          'heightAtBirth': _heightController.text.trim(),
+          'bloodGroup': _bloodGroupController.text.trim(),
+          'birthPlace': _birthPlaceController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Navigate to DashboardScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to save baby details: $e')),
+        );
+      }
     } else if (_selectedDate == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select the date of birth')),
@@ -344,7 +356,8 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: ElevatedButton(
-                      onPressed: _handleProceed,
+                      onPressed:
+                          _handleProceed, // Change to: onPressed: () => _handleProceed(),
                       child: const Center(
                         child: Text(
                           'Proceed',

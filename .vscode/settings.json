@@ -1,4 +1,5 @@
 {
     "avdmanager.executable": "c:\\Users\\MSI KATANA\\AppData\\Local\\Android\\Sdk\\tools\\bin\\avdmanager.bat",
-    "avdmanager.sdkManager": "c:\\Users\\MSI KATANA\\AppData\\Local\\Android\\Sdk\\tools\\bin\\sdkmanager.bat"
+    "avdmanager.sdkManager": "c:\\Users\\MSI KATANA\\AppData\\Local\\Android\\Sdk\\tools\\bin\\sdkmanager.bat",
+    "cmake.sourceDirectory": "C:/Users/MSI KATANA/Documents/GitHub/infantfuel_app/linux"
 }

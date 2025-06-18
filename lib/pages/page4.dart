@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'page3.dart'; // Import LoginScreen for navigation
 import 'page6.dart'; // Import BabyDetailsScreen for navigation
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore for database operations
 
 class ParentRegistrationScreen extends StatefulWidget {
   const ParentRegistrationScreen({super.key});
@@ -65,22 +66,33 @@ class _ParentRegistrationScreenState extends State<ParentRegistrationScreen> {
   }
 
   // Handle form submission
-  void _handleProceed() {
+  Future<void> _handleProceed() async {
     if (_formKey.currentState!.validate() &&
         _selectedDistrict != null &&
         _selectedGramaNiladhari != null) {
       // Form is valid, proceed with submission
-      print('Full Name: ${_fullNameController.text}');
-      print('Address: ${_addressController.text}');
-      print('Contact Number: ${_contactNumberController.text}');
-      print('District: $_selectedDistrict');
-      print('Grama Niladhari Division: $_selectedGramaNiladhari');
 
-      // Navigate to BabyDetailsScreen
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const BabyDetailsScreen()),
-      );
+      // Store data in Firestore under 'parent details' collection
+      try {
+        await FirebaseFirestore.instance.collection('parent details').add({
+          'fullName': _fullNameController.text.trim(),
+          'address': _addressController.text.trim(),
+          'contactNumber': _contactNumberController.text.trim(),
+          'district': _selectedDistrict,
+          'gramaNiladhariDivision': _selectedGramaNiladhari,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        // Navigate to BabyDetailsScreen
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const BabyDetailsScreen()),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to register: $e')));
+      }
     } else if (_selectedDistrict == null) {
       ScaffoldMessenger.of(
         context,
