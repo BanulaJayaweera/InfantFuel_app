@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tracking_screen.dart';
 import 'health_screen.dart';
 import 'dashboard_screen.dart';
@@ -19,7 +20,47 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
   TimeOfDay? _selectedTime;
   final _notesController = TextEditingController();
 
-  final List<String> _fluidOptions = ['Water', 'Milk'];
+  final List<String> _fluidOptions = [
+    'Water',
+    'Milk',
+    'Formula',
+    'Breast Milk',
+    'Apple Juice',
+  ];
+
+  // Nutritional values for 10ml of each fluid
+  final Map<String, Map<String, double>> _fluidNutrition = {
+    'Water': {
+      'carbs_g': 0.0,
+      'proteins_g': 0.0,
+      'fats_g': 0.0,
+      'calories_kcal': 0.0,
+    },
+    'Milk': {
+      'carbs_g': 0.47,
+      'proteins_g': 0.33,
+      'fats_g': 0.37,
+      'calories_kcal': 6.1,
+    },
+    'Formula': {
+      'carbs_g': 0.72,
+      'proteins_g': 0.13,
+      'fats_g': 0.36,
+      'calories_kcal': 6.8,
+    },
+    'Breast Milk': {
+      'carbs_g': 0.69,
+      'proteins_g': 0.11,
+      'fats_g': 0.41,
+      'calories_kcal': 7.0,
+    },
+    'Apple Juice': {
+      'carbs_g': 1.14,
+      'proteins_g': 0.01,
+      'fats_g': 0.01,
+      'calories_kcal': 4.6,
+    },
+  };
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -47,23 +88,59 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
     }
   }
 
-  void _handleSaveFeed() {
+  Future<void> _handleSaveFeed() async {
     if (_formKey.currentState!.validate() &&
         _selectedFluid != null &&
         _selectedDate != null &&
         _selectedTime != null) {
-      // Form is valid, proceed with saving
-      print('Fluid Type: $_selectedFluid');
-      print('Volume: ${_volumeController.text} ml');
-      print('Date: $_selectedDate');
-      print('Time: ${_selectedTime!.format(context)}');
-      print('Notes: ${_notesController.text}');
+      try {
+        // Combine date and time into a single DateTime object
+        final selectedDateTime = DateTime(
+          _selectedDate!.year,
+          _selectedDate!.month,
+          _selectedDate!.day,
+          _selectedTime!.hour,
+          _selectedTime!.minute,
+        );
 
-      // Show confirmation and navigate back to TrackingScreen
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Feed saved successfully')));
-      Navigator.pop(context);
+        // Calculate nutrition based on volume
+        final double volume = double.parse(_volumeController.text);
+        final double volumeFactor = volume / 10.0;
+        final double carbs =
+            _fluidNutrition[_selectedFluid]!['carbs_g']! * volumeFactor;
+        final double proteins =
+            _fluidNutrition[_selectedFluid]!['proteins_g']! * volumeFactor;
+        final double fats =
+            _fluidNutrition[_selectedFluid]!['fats_g']! * volumeFactor;
+        final double calories =
+            _fluidNutrition[_selectedFluid]!['calories_kcal']! * volumeFactor;
+
+        // Save to Firestore
+        await FirebaseFirestore.instance.collection('fluids_tracking').add({
+          'fluid_type': _selectedFluid,
+          'volume_ml': volume,
+          'datetime': Timestamp.fromDate(selectedDateTime),
+          'carbs_g': carbs,
+          'proteins_g': proteins,
+          'fats_g': fats,
+          'calories_kcal': calories,
+          'notes': _notesController.text,
+          'timestamp': Timestamp.now(),
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Feed saved successfully')),
+        );
+
+        // Navigate back to TrackingScreen
+        Navigator.pop(context);
+      } catch (e) {
+        // Show error message
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving feed: $e')));
+      }
     } else {
       if (_selectedFluid == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -434,7 +511,7 @@ class _FluidsTrackingScreenState extends State<FluidsTrackingScreen> {
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-           if (index == 0) {
+          if (index == 0) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const DashboardScreen()),

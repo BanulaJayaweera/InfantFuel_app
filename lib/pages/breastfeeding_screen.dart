@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BreastfeedingTrackingScreen extends StatefulWidget {
   const BreastfeedingTrackingScreen({super.key});
@@ -17,6 +18,14 @@ class _BreastfeedingTrackingScreenState
   String _selectedSide = '';
   late Timer _timer;
   String _displayText = "Choose L or R to start the timer";
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize timer (will be started when needed)
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {});
+    _timer.cancel(); // Cancel immediately until started
+  }
 
   @override
   void dispose() {
@@ -38,13 +47,36 @@ class _BreastfeedingTrackingScreenState
     }
   }
 
-  void _stopTimer() {
+  Future<void> _stopTimer() async {
     if (_isTimerRunning) {
       _timer.cancel();
+      try {
+        // Save to Firestore
+        await FirebaseFirestore.instance
+            .collection('breastfeeding_sessions')
+            .add({
+              'side': _selectedSide,
+              'duration_seconds': _seconds,
+              'timestamp': Timestamp.now(),
+            });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Breastfeeding session saved')),
+        );
+      } catch (e) {
+        // Show error message
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving session: $e')));
+      }
+
       setState(() {
         _isTimerRunning = false;
         _isTimerPaused = false;
         _seconds = 0;
+        _displayText = "Choose L or R to start the timer";
+        _selectedSide = '';
       });
     }
   }
@@ -97,31 +129,95 @@ class _BreastfeedingTrackingScreenState
 
   void _navigateToManualEntry() {
     String manualEntry = '';
+    String? selectedSide;
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Manual Entry'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Enter time (MM:SS)',
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  manualEntry = value;
-                },
-              ),
-            ],
+          content: StatefulBuilder(
+            builder: (context, setDialogState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    decoration: const InputDecoration(
+                      labelText: 'Enter time (MM:SS)',
+                      hintText: 'e.g., 10:30',
+                    ),
+                    keyboardType: TextInputType.text,
+                    onChanged: (value) {
+                      manualEntry = value;
+                    },
+                  ),
+                  const SizedBox(height: 10),
+                  DropdownButton<String>(
+                    hint: const Text('Select Side'),
+                    value: selectedSide,
+                    items:
+                        ['L', 'R'].map((side) {
+                          return DropdownMenuItem<String>(
+                            value: side,
+                            child: Text(side == 'L' ? 'Left (L)' : 'Right (R)'),
+                          );
+                        }).toList(),
+                    onChanged: (value) {
+                      setDialogState(() {
+                        selectedSide = value;
+                      });
+                    },
+                  ),
+                ],
+              );
+            },
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                if (manualEntry.isNotEmpty) {
-                  print('Manual entry saved: $manualEntry');
+              onPressed: () async {
+                // Validate manual entry format (MM:SS)
+                RegExp timeRegex = RegExp(r'^\d{1,2}:\d{2}$');
+                if (manualEntry.isEmpty || !timeRegex.hasMatch(manualEntry)) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Please enter time in MM:SS format'),
+                    ),
+                  );
+                  return;
                 }
+                if (selectedSide == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Please select a side')),
+                  );
+                  return;
+                }
+
+                // Parse MM:SS to seconds
+                List<String> parts = manualEntry.split(':');
+                int minutes = int.parse(parts[0]);
+                int seconds = int.parse(parts[1]);
+                int totalSeconds = minutes * 60 + seconds;
+
+                try {
+                  // Save to Firestore
+                  await FirebaseFirestore.instance
+                      .collection('breastfeeding_sessions')
+                      .add({
+                        'side': selectedSide,
+                        'duration_seconds': totalSeconds,
+                        'timestamp': Timestamp.now(),
+                      });
+
+                  // Show success message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Manual entry saved')),
+                  );
+                } catch (e) {
+                  // Show error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error saving entry: $e')),
+                  );
+                }
+
                 Navigator.pop(context);
               },
               child: const Text('Save'),

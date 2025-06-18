@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import 'tracking_screen.dart';
 import 'health_screen.dart';
 import 'dashboard_screen.dart';
@@ -16,12 +20,20 @@ class _MedicationScreenState extends State<MedicationScreen> {
   final _sicknessController = TextEditingController();
   int _selectedDays = 1; // Default time period in days
   final _notesController = TextEditingController();
+  File? _selectedImage;
+  bool _isUploading = false;
+
+  final ImagePicker _picker = ImagePicker();
 
   Future<void> _selectPhoto() async {
-    // Placeholder for photo upload functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo upload feature to be implemented')),
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
     );
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
   }
 
   void _selectDays(BuildContext context) {
@@ -69,19 +81,50 @@ class _MedicationScreenState extends State<MedicationScreen> {
     );
   }
 
-  void _handleSaveMedicine() {
-    if (_formKey.currentState!.validate() &&
-        _sicknessController.text.isNotEmpty) {
-      // Form is valid, proceed with saving
-      print('Sickness: ${_sicknessController.text}');
-      print('Time Period: $_selectedDays day${_selectedDays == 1 ? '' : 's'}');
-      print('Notes: ${_notesController.text}');
+  Future<void> _handleSaveMedicine() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isUploading = true;
+      });
 
-      // Show confirmation and navigate back to HealthScreen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Medicine saved successfully')),
-      );
-      Navigator.pop(context); // Navigate back to HealthScreen
+      try {
+        String? photoUrl;
+        // Upload image to Firebase Storage if selected
+        if (_selectedImage != null) {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child('medication_photos')
+              .child('${Timestamp.now().millisecondsSinceEpoch}.jpg');
+          await storageRef.putFile(_selectedImage!);
+          photoUrl = await storageRef.getDownloadURL();
+        }
+
+        // Save to Firestore
+        await FirebaseFirestore.instance.collection('medication_history').add({
+          'sickness': _sicknessController.text.trim(),
+          'time_period_days': _selectedDays,
+          'notes': _notesController.text.trim(),
+          'photo_url': photoUrl,
+          'timestamp': Timestamp.now(),
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Medication saved successfully')),
+        );
+
+        // Navigate back to HealthScreen
+        Navigator.pop(context);
+      } catch (e) {
+        // Show error message
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error saving medication: $e')));
+      } finally {
+        setState(() {
+          _isUploading = false;
+        });
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please enter the sickness')),
@@ -112,18 +155,16 @@ class _MedicationScreenState extends State<MedicationScreen> {
                 width: 500,
                 decoration: const BoxDecoration(
                   color: Color.fromARGB(255, 247, 220, 203),
-                  borderRadius: BorderRadius.only(),
                 ),
               ),
             ),
             // Main content
             SingleChildScrollView(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   // Logo and Title
                   Padding(
-                    padding: const EdgeInsets.only(top: 30.0, left: 0.0),
+                    padding: const EdgeInsets.only(top: 30.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -136,7 +177,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(50),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.grey.withAlpha(51),
@@ -189,10 +230,10 @@ class _MedicationScreenState extends State<MedicationScreen> {
                       ],
                     ),
                   ),
-                  // Form Section with White Background Box
+                  // Form Section with White Background
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 30.0,
+                      horizontal: 20.0,
                       vertical: 20.0,
                     ),
                     child: Container(
@@ -202,7 +243,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                         borderRadius: BorderRadius.circular(15),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withAlpha(51),
+                            color: Colors.grey.withOpacity(0.2),
                             spreadRadius: 2,
                             blurRadius: 5,
                             offset: const Offset(0, 3),
@@ -216,7 +257,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                           children: [
                             // Add a Photo
                             const Text(
-                              "Add a photo",
+                              "Add a Photo (Optional)",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -226,15 +267,24 @@ class _MedicationScreenState extends State<MedicationScreen> {
                             GestureDetector(
                               onTap: _selectPhoto,
                               child: Container(
-                                padding: const EdgeInsets.all(20.0),
+                                height: 100,
                                 decoration: BoxDecoration(
                                   border: Border.all(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(10),
+                                  color: Colors.grey[100],
                                 ),
-                                child: const Icon(
-                                  Icons.add_a_photo,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
+                                child: Center(
+                                  child:
+                                      _selectedImage == null
+                                          ? const Icon(
+                                            Icons.add_a_photo,
+                                            color: Color(0xFF6A5ACD),
+                                            size: 40,
+                                          )
+                                          : Image.file(
+                                            _selectedImage!,
+                                            fit: BoxFit.cover,
+                                          ),
                                 ),
                               ),
                             ),
@@ -254,13 +304,14 @@ class _MedicationScreenState extends State<MedicationScreen> {
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
+                                hintText: 'Enter sickness',
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 15,
                                 ),
                               ),
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'Please enter the sickness';
                                 }
                                 return null;
@@ -269,7 +320,7 @@ class _MedicationScreenState extends State<MedicationScreen> {
                             const SizedBox(height: 20),
                             // Time Period Picker
                             const Text(
-                              "Time period",
+                              "Time Period",
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -334,11 +385,11 @@ class _MedicationScreenState extends State<MedicationScreen> {
                   // Save Medicine Button
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 30.0,
+                      horizontal: 20.0,
                       vertical: 20.0,
                     ),
                     child: ElevatedButton(
-                      onPressed: _handleSaveMedicine,
+                      onPressed: _isUploading ? null : _handleSaveMedicine,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF6A5ACD),
                         foregroundColor: Colors.white,
@@ -347,10 +398,15 @@ class _MedicationScreenState extends State<MedicationScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                       ),
-                      child: const Text(
-                        'Save Medicine',
-                        style: TextStyle(fontSize: 18),
-                      ),
+                      child:
+                          _isUploading
+                              ? const CircularProgressIndicator(
+                                color: Colors.white,
+                              )
+                              : const Text(
+                                'Save Medicine',
+                                style: TextStyle(fontSize: 18),
+                              ),
                     ),
                   ),
                   const SizedBox(height: 70),
@@ -379,22 +435,22 @@ class _MedicationScreenState extends State<MedicationScreen> {
         unselectedItemColor: Colors.grey,
         onTap: (index) {
           if (index == 0) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const DashboardScreen()),
             );
           } else if (index == 1) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const TrackingScreen()),
             );
           } else if (index == 2) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const HealthScreen()),
             );
           } else if (index == 3) {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(builder: (context) => const ExtrasScreen()),
             );

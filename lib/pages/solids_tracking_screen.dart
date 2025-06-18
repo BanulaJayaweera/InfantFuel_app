@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tracking_screen.dart';
 import 'health_screen.dart';
 import 'dashboard_screen.dart';
@@ -21,8 +22,52 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
   final _fatsController = TextEditingController();
   final _caloriesController = TextEditingController();
   final _notesController = TextEditingController();
+  final _foodNameController = TextEditingController();
 
-  final List<String> _foodOptions = ['Rice', 'Noodles'];
+  final List<String> _foodOptions = [
+    'None',
+    'Rice',
+    'Noodles',
+    'Pureed Carrot',
+    'Mashed Banana',
+    'Oatmeal Porridge',
+  ];
+  bool _isManualNutritionEnabled = true;
+  bool _isFoodQuantityEnabled = true;
+
+  // Nutritional values for 10g of each food
+  final Map<String, Map<String, double>> _foodNutrition = {
+    'Rice': {
+      'carbs_g': 2.8,
+      'proteins_g': 0.3,
+      'fats_g': 0.1,
+      'calories_kcal': 13.0,
+    },
+    'Noodles': {
+      'carbs_g': 2.5,
+      'proteins_g': 0.4,
+      'fats_g': 0.2,
+      'calories_kcal': 13.1,
+    },
+    'Pureed Carrot': {
+      'carbs_g': 0.8,
+      'proteins_g': 0.1,
+      'fats_g': 0.0,
+      'calories_kcal': 3.5,
+    },
+    'Mashed Banana': {
+      'carbs_g': 2.3,
+      'proteins_g': 0.1,
+      'fats_g': 0.0,
+      'calories_kcal': 8.9,
+    },
+    'Oatmeal Porridge': {
+      'carbs_g': 1.2,
+      'proteins_g': 0.3,
+      'fats_g': 0.2,
+      'calories_kcal': 6.8,
+    },
+  };
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -39,6 +84,7 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
   }
 
   void _selectQuantity(BuildContext context) {
+    if (!_isFoodQuantityEnabled) return;
     showModalBottomSheet(
       context: context,
       builder: (BuildContext context) {
@@ -52,6 +98,11 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                   onSelectedItemChanged: (index) {
                     setState(() {
                       _selectedQuantity = (index + 1) * 10; // 10g increments
+                      if (_selectedFood != null &&
+                          _selectedFood != 'None' &&
+                          _selectedQuantity > 0) {
+                        _isManualNutritionEnabled = false;
+                      }
                     });
                   },
                   childDelegate: ListWheelChildBuilderDelegate(
@@ -83,42 +134,94 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
     );
   }
 
-  void _handleSaveFeed() {
-    if (_formKey.currentState!.validate() &&
-        _selectedFood != null &&
-        _selectedDate != null) {
-      // Form is valid, proceed with saving
-      print('Food Type: $_selectedFood');
-      print('Quantity: $_selectedQuantity g');
-      print('Date: $_selectedDate');
-      print(
-        'Carbs: ${_carbsController.text.isEmpty ? "0" : _carbsController.text} g',
-      );
-      print(
-        'Proteins: ${_proteinsController.text.isEmpty ? "0" : _proteinsController.text} g',
-      );
-      print(
-        'Fats: ${_fatsController.text.isEmpty ? "0" : _fatsController.text} g',
-      );
-      print(
-        'Calories: ${_caloriesController.text.isEmpty ? "0" : _caloriesController.text} kcal',
-      );
-      print('Notes: ${_notesController.text}');
+  void _checkInputState() {
+    bool hasManualInput = _carbsController.text.isNotEmpty ||
+        _proteinsController.text.isNotEmpty ||
+        _fatsController.text.isNotEmpty ||
+        _caloriesController.text.isNotEmpty;
+    bool hasFoodQuantity =
+        _selectedFood != null && _selectedFood != 'None' && _selectedQuantity > 0;
 
-      // Show confirmation and navigate back to TrackingScreen
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Feed saved successfully')));
-      Navigator.pop(context);
-    } else {
-      if (_selectedFood == null) {
+    setState(() {
+      _isManualNutritionEnabled = !hasFoodQuantity || _selectedFood == 'None';
+      _isFoodQuantityEnabled = !hasManualInput;
+    });
+  }
+
+  Future<void> _handleSaveFeed() async {
+    if (_formKey.currentState!.validate() && _selectedDate != null) {
+      if (_selectedFood == null && _isFoodQuantityEnabled) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please select a food type')),
         );
-      } else if (_selectedDate == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Please select a date')));
+        return;
+      }
+
+      try {
+        double carbs = 0.0;
+        double proteins = 0.0;
+        double fats = 0.0;
+        double calories = 0.0;
+
+        if (_selectedFood != null &&
+            _selectedFood != 'None' &&
+            _foodNutrition.containsKey(_selectedFood)) {
+          // Calculate nutrition based on quantity
+          double quantityFactor = _selectedQuantity / 10.0;
+          carbs = _foodNutrition[_selectedFood]!['carbs_g']! * quantityFactor;
+          proteins =
+              _foodNutrition[_selectedFood]!['proteins_g']! * quantityFactor;
+          fats = _foodNutrition[_selectedFood]!['fats_g']! * quantityFactor;
+          calories =
+              _foodNutrition[_selectedFood]!['calories_kcal']! * quantityFactor;
+        } else {
+          // Use manual nutrition values
+          carbs = _carbsController.text.isEmpty
+              ? 0.0
+              : double.parse(_carbsController.text);
+          proteins = _proteinsController.text.isEmpty
+              ? 0.0
+              : double.parse(_proteinsController.text);
+          fats = _caloriesController.text.isEmpty
+              ? 0.0
+              : double.parse(_fatsController.text);
+          calories = _caloriesController.text.isEmpty
+              ? 0.0
+              : double.parse(_caloriesController.text);
+        }
+
+        // Save to Firestore
+        await FirebaseFirestore.instance.collection('solids_tracking').add({
+          'food_type': _selectedFood,
+          'food_name': _foodNameController.text.trim(),
+          'quantity_g': _selectedQuantity,
+          'date': _selectedDate != null ? Timestamp.fromDate(_selectedDate!) : null,
+          'carbs_g': carbs,
+          'proteins_g': proteins,
+          'fats_g': fats,
+          'calories_kcal': calories,
+          
+          'timestamp': Timestamp.now(),
+        });
+
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Feed saved successfully')),
+        );
+
+        // Navigate back to TrackingScreen
+        Navigator.pop(context);
+      } catch (e) {
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error saving feed: $e')),
+        );
+      }
+    } else {
+      if (_selectedDate == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a date')),
+        );
       }
     }
   }
@@ -130,6 +233,7 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
     _fatsController.dispose();
     _caloriesController.dispose();
     _notesController.dispose();
+    _foodNameController.dispose();
     super.dispose();
   }
 
@@ -226,11 +330,11 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                       ],
                     ),
                   ),
-                  // Form Section with White Background Box
+                  // First Form Section (Food Type, Quantity, Date)
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30.0,
-                      vertical: 20.0,
+                      vertical: 10.0,
                     ),
                     child: Container(
                       padding: const EdgeInsets.all(20.0),
@@ -272,18 +376,22 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                               ),
                               hint: const Text('Select Food Type'),
                               value: _selectedFood,
-                              items:
-                                  _foodOptions.map((String food) {
-                                    return DropdownMenuItem<String>(
-                                      value: food,
-                                      child: Text(food),
-                                    );
-                                  }).toList(),
-                              onChanged: (String? newValue) {
-                                setState(() {
-                                  _selectedFood = newValue;
-                                });
-                              },
+                              items: _foodOptions.map((String food) {
+                                return DropdownMenuItem<String>(
+                                  value: food,
+                                  child: Text(food),
+                                );
+                              }).toList(),
+                              onChanged: _isFoodQuantityEnabled
+                                  ? (String? newValue) {
+                                      setState(() {
+                                        _selectedFood = newValue;
+                                        _isManualNutritionEnabled =
+                                            newValue == 'None' ||
+                                            (newValue == null || _selectedQuantity == 0);
+                                      });
+                                    }
+                                  : null,
                             ),
                             const SizedBox(height: 20),
                             // Quantity Picker
@@ -296,27 +404,46 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                             ),
                             const SizedBox(height: 10),
                             GestureDetector(
-                              onTap: () => _selectQuantity(context),
+                              onTap: _selectedFood == 'None'
+                                  ? null
+                                  : () => _selectQuantity(context),
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 15,
                                 ),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey),
+                                  border: Border.all(
+                                    color: _isFoodQuantityEnabled &&
+                                            _selectedFood != 'None'
+                                        ? Colors.grey
+                                        : Colors.grey.withOpacity(0.5),
+                                  ),
                                   borderRadius: BorderRadius.circular(10),
+                                  color: _isFoodQuantityEnabled &&
+                                          _selectedFood != 'None'
+                                      ? Colors.white
+                                      : Colors.grey.withOpacity(0.1),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       '$_selectedQuantity g',
-                                      style: const TextStyle(
-                                        color: Colors.black,
+                                      style: TextStyle(
+                                        color: _isFoodQuantityEnabled &&
+                                                _selectedFood != 'None'
+                                            ? Colors.black
+                                            : Colors.grey,
                                       ),
                                     ),
-                                    const Icon(Icons.arrow_drop_down),
+                                    Icon(
+                                      Icons.arrow_drop_down,
+                                      color: _isFoodQuantityEnabled &&
+                                              _selectedFood != 'None'
+                                          ? Colors.black
+                                          : Colors.grey,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -343,18 +470,16 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
                                     Text(
                                       _selectedDate == null
                                           ? 'Select Date'
                                           : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
                                       style: TextStyle(
-                                        color:
-                                            _selectedDate == null
-                                                ? Colors.grey
-                                                : Colors.black,
+                                        color: _selectedDate == null
+                                            ? Colors.grey
+                                            : Colors.black,
                                       ),
                                     ),
                                     const Icon(Icons.calendar_today),
@@ -362,129 +487,196 @@ class _SolidsTrackingScreenState extends State<SolidsTrackingScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
-                            // Manual Nutrition Input
-                            const Text(
-                              "Manual Nutrition (Optional)",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _carbsController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      labelText: 'Carbs (g)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 15,
-                                          ),
-                                    ),
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Please enter a valid number';
-                                        }
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _proteinsController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      labelText: 'Proteins (g)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 15,
-                                          ),
-                                    ),
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Please enter a valid number';
-                                        }
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 10),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _fatsController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      labelText: 'Fats (g)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 15,
-                                          ),
-                                    ),
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Please enter a valid number';
-                                        }
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: TextFormField(
-                                    controller: _caloriesController,
-                                    keyboardType: TextInputType.number,
-                                    decoration: InputDecoration(
-                                      labelText: 'Calories (kcal)',
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      contentPadding:
-                                          const EdgeInsets.symmetric(
-                                            horizontal: 10,
-                                            vertical: 15,
-                                          ),
-                                    ),
-                                    validator: (value) {
-                                      if (value != null && value.isNotEmpty) {
-                                        if (double.tryParse(value) == null) {
-                                          return 'Please enter a valid number';
-                                        }
-                                      }
-                                      return null;
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
+                      ),
+                    ),
+                  ),
+                  // Second Form Section (Manual Nutrition, Food Name, Notes)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 30.0,
+                      vertical: 10.0,
+                    ),
+                    child: Container(
+                      padding: const EdgeInsets.all(20.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(15),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withAlpha(51),
+                            spreadRadius: 2,
+                            blurRadius: 5,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Manual Nutrition Input
+                          const Text(
+                            "Manual Nutrition (Optional)",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _carbsController,
+                                  keyboardType: TextInputType.number,
+                                  enabled: _isManualNutritionEnabled,
+                                  decoration: InputDecoration(
+                                    labelText: 'Carbs (g)',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 15,
+                                    ),
+                                    filled: !_isManualNutritionEnabled,
+                                    fillColor: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      if (double.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => _checkInputState(),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _proteinsController,
+                                  keyboardType: TextInputType.number,
+                                  enabled: _isManualNutritionEnabled,
+                                  decoration: InputDecoration(
+                                    labelText: 'Proteins (g)',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 15,
+                                    ),
+                                    filled: !_isManualNutritionEnabled,
+                                    fillColor: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      if (double.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => _checkInputState(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _fatsController,
+                                  keyboardType: TextInputType.number,
+                                  enabled: _isManualNutritionEnabled,
+                                  decoration: InputDecoration(
+                                    labelText: 'Fats (g)',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 15,
+                                    ),
+                                    filled: !_isManualNutritionEnabled,
+                                    fillColor: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      if (double.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => _checkInputState(),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: TextFormField(
+                                  controller: _caloriesController,
+                                  keyboardType: TextInputType.number,
+                                  enabled: _isManualNutritionEnabled,
+                                  decoration: InputDecoration(
+                                    labelText: 'Calories (kcal)',
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 15,
+                                    ),
+                                    filled: !_isManualNutritionEnabled,
+                                    fillColor: Colors.grey.withOpacity(0.1),
+                                  ),
+                                  validator: (value) {
+                                    if (value != null && value.isNotEmpty) {
+                                      if (double.tryParse(value) == null) {
+                                        return 'Please enter a valid number';
+                                      }
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) => _checkInputState(),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          // Food Name Input
+                          const Text(
+                            "Name of Food",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          TextFormField(
+                            controller: _foodNameController,
+                            enabled: _isManualNutritionEnabled,
+                            decoration: InputDecoration(
+                              labelText: 'Enter name of food',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 15,
+                              ),
+                              filled: !_isManualNutritionEnabled,
+                              fillColor: Colors.grey.withOpacity(0.1),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          // Notes Input
+                         
+                        ],
                       ),
                     ),
                   ),
