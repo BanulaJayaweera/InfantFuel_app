@@ -8,6 +8,7 @@ import 'fluids_tracking_screen.dart';
 import 'solids_tracking_screen.dart';
 import 'extras.dart';
 import 'dashboard_screen.dart';
+import 'nutrition_summary.dart';
 
 class TrackingScreen extends StatelessWidget {
   const TrackingScreen({super.key});
@@ -61,8 +62,11 @@ class TrackingScreen extends StatelessWidget {
     print('Navigate to Growth Summary Screen (to be implemented)');
   }
 
-  void _onNutritionSummaryTapped() {
-    print('Navigate to Nutrition Summary Screen (to be implemented)');
+  void _onNutritionSummaryTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const NutritionTrackingSummary()),
+    );
   }
 
   @override
@@ -331,7 +335,8 @@ class TrackingScreen extends StatelessWidget {
                               ),
                             ),
                             TextButton(
-                              onPressed: _onNutritionSummaryTapped,
+                              onPressed:
+                                  () => _onNutritionSummaryTapped(context),
                               child: const Row(
                                 children: [
                                   Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'vaccination_tracking_screen.dart';
 import 'healthcare_weight_screen.dart';
+import 'baby_list.dart';
 
 class HealthcareDashboardScreen extends StatelessWidget {
   const HealthcareDashboardScreen({super.key});
@@ -370,7 +371,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
           ],
         ),
       ),
-      // Bottom Navigation Bar with 2 buttons (do nothing for now)
+      // Bottom Navigation Bar with 2 buttons
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -383,7 +384,14 @@ class HealthcareDashboardScreen extends StatelessWidget {
         selectedItemColor: const Color(0xFF6A5ACD),
         unselectedItemColor: Colors.grey,
         onTap: (index) {
-          // Do nothing for now
+          if (index == 0) {
+            // Do nothing, already on dashboard
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const BabyListPage()),
+            );
+          }
         },
       ),
     );

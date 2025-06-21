@@ -51,12 +51,15 @@ class _BreastfeedingTrackingScreenState
     if (_isTimerRunning) {
       _timer.cancel();
       try {
+        // Calculate calories (55 calories per second)
+        double kcal = _seconds * 55.0;
         // Save to Firestore
         await FirebaseFirestore.instance
             .collection('breastfeeding_sessions')
             .add({
               'side': _selectedSide,
               'duration_seconds': _seconds,
+              'kcal': kcal,
               'timestamp': Timestamp.now(),
             });
 
@@ -197,6 +200,9 @@ class _BreastfeedingTrackingScreenState
                 int seconds = int.parse(parts[1]);
                 int totalSeconds = minutes * 60 + seconds;
 
+                // Calculate calories (55 calories per second)
+                double kcal = totalSeconds * 55.0 * 0.001;
+
                 try {
                   // Save to Firestore
                   await FirebaseFirestore.instance
@@ -204,6 +210,7 @@ class _BreastfeedingTrackingScreenState
                       .add({
                         'side': selectedSide,
                         'duration_seconds': totalSeconds,
+                        'kcal': kcal,
                         'timestamp': Timestamp.now(),
                       });
 

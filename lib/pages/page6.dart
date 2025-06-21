@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import at the top
-import 'page3.dart'; // Import LoginScreen for navigation
+import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import at the top // Import LoginScreen for navigation
 import 'dashboard_screen.dart'; // Import DashboardScreen for navigation
 
 class BabyDetailsScreen extends StatefulWidget {
@@ -18,8 +17,10 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
   final _babyNameController = TextEditingController();
   final _weightController = TextEditingController();
   final _heightController = TextEditingController();
+  final _headCircumferenceController = TextEditingController();
   final _bloodGroupController = TextEditingController();
   final _birthPlaceController = TextEditingController();
+  
 
   // Date of birth
   DateTime? _selectedDate;
@@ -38,6 +39,7 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
     _heightController.dispose();
     _bloodGroupController.dispose();
     _birthPlaceController.dispose();
+    _headCircumferenceController.dispose();
     super.dispose();
   }
 
@@ -69,6 +71,17 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
     final height = double.tryParse(value);
     if (height == null || height <= 0) {
       return 'Please enter a valid height';
+    }
+    return null;
+  }
+
+   String? _validateHeadCircumference(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter the Head Circumference at birth';
+    }
+    final height = double.tryParse(value);
+    if (height == null || height <= 0) {
+      return 'Please enter a valid Head Circumference';
     }
     return null;
   }
@@ -119,6 +132,7 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
           'gender': _selectedGender,
           'weightAtBirth': _weightController.text.trim(),
           'heightAtBirth': _heightController.text.trim(),
+          'headCircumferenceAtBirth': _headCircumferenceController.text.trim(),
           'bloodGroup': _bloodGroupController.text.trim(),
           'birthPlace': _birthPlaceController.text.trim(),
           'createdAt': FieldValue.serverTimestamp(),
@@ -321,6 +335,21 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
                           ),
                           const SizedBox(height: 15),
                           TextFormField(
+                            controller: _headCircumferenceController,
+                            decoration: InputDecoration(
+                              hintText: 'Head Circumference at birth',
+                              filled: true,
+                              fillColor: Colors.white,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: _validateHeadCircumference,
+                          ),
+                          const SizedBox(height: 15),
+                          TextFormField(
                             controller: _bloodGroupController,
                             decoration: InputDecoration(
                               hintText: 'Blood group',
@@ -370,25 +399,8 @@ class _BabyDetailsScreenState extends State<BabyDetailsScreen> {
                     ),
                   ),
                   const SizedBox(height: 20),
+
                   // Sign In Link
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const LoginScreen(),
-                        ),
-                      );
-                    },
-                    child: const Text(
-                      'Already have an account? Sign in',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF6A5ACD),
-                        decoration: TextDecoration.underline,
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 20),
                 ],
               ),
