@@ -1,8 +1,13 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'healthcare_dashboard_screen.dart ';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'healthcare_dashboard_screen.dart';
 
 class VaccinationTrackingScreen extends StatefulWidget {
-  const VaccinationTrackingScreen({super.key});
+  final String babyId; // Receive babyId from HealthcareDashboardScreen
+
+  const VaccinationTrackingScreen({super.key, required this.babyId});
 
   @override
   State<VaccinationTrackingScreen> createState() => VaccinationScreen();
@@ -14,6 +19,7 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
   int _selectedDays = 1; // Default time period in days
   final _notesController = TextEditingController();
   DateTime? _selectedDate;
+  File? _selectedImage;
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -30,10 +36,13 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
   }
 
   Future<void> _selectPhoto() async {
-    // Placeholder for photo upload functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo upload feature to be implemented')),
-    );
+    final ImagePicker _picker = ImagePicker();
+    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+    if (image != null) {
+      setState(() {
+        _selectedImage = File(image.path);
+      });
+    }
   }
 
   void _selectDays(BuildContext context) {
@@ -84,19 +93,34 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
   void _handleSaveMedicine() {
     if (_formKey.currentState!.validate() &&
         _sicknessController.text.isNotEmpty) {
-      // Form is valid, proceed with saving
-      print('Vaccination: ${_sicknessController.text}');
-      print('Time Period: $_selectedDays ');
-      print('Notes: ${_notesController.text}');
-
-      // Show confirmation and navigate back to HealthScreen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vaccination saved successfully')),
-      );
-      Navigator.pop(context); // Navigate back to HealthScreen
+      // Form is valid, save to Firestore
+      FirebaseFirestore.instance.collection('vaccination_history').add({
+        'babyId': widget.babyId,
+        'vaccine': _sicknessController.text,
+        'dosage': _selectedDays,
+        'date': _selectedDate ?? DateTime.now(),
+        'notes': _notesController.text.isEmpty ? null : _notesController.text,
+        'imageUrl': _selectedImage != null ? 'placeholder_image_url' : null, // Replace with actual upload logic
+        'timestamp': FieldValue.serverTimestamp(),
+      }).then((value) {
+        // Show confirmation and navigate back to HealthcareDashboardScreen
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Vaccination saved successfully')),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
+          ),
+        );
+      }).catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to save vaccination')),
+        );
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter the vaccination')),
+        const SnackBar(content: Text('Please enter the vaccine')),
       );
     }
   }
@@ -189,10 +213,10 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
                               ),
                             ],
                           ),
-                          child: const Text(
-                            "Vaccination\nBaby 1",
+                          child: Text(
+                            "Vaccination\n${widget.babyId}",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
                             ),
@@ -243,11 +267,18 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
                                   border: Border.all(color: Colors.grey),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
-                                  Icons.add_a_photo,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
-                                ),
+                                child: _selectedImage == null
+                                    ? const Icon(
+                                        Icons.add_a_photo,
+                                        color: Color(0xFF6A5ACD),
+                                        size: 40,
+                                      )
+                                    : Image.file(
+                                        _selectedImage!,
+                                        width: 100,
+                                        height: 100,
+                                        fit: BoxFit.cover,
+                                      ),
                               ),
                             ),
                             const SizedBox(height: 20),
@@ -314,7 +345,6 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
                                 ),
                               ),
                             ),
-
                             const SizedBox(height: 20),
                             GestureDetector(
                               onTap: () => _selectDate(context),
@@ -421,14 +451,14 @@ class VaccinationScreen extends State<VaccinationTrackingScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const HealthcareDashboardScreen(),
+                builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
               ),
             );
           } else if (index == 1) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const HealthcareDashboardScreen(),
+                builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
               ),
             );
           }

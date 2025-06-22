@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:infantfuel_mobile/pages/baby_list.dart';
 import 'page3.dart'; // Import LoginScreen for navigation
-import 'healthcare_dashboard_screen.dart'; // Import HealthcareDashboardScreen for navigation
+ // Import HealthcareDashboardScreen for navigation
 import 'package:cloud_firestore/cloud_firestore.dart'; // Add this import at the top
 
 class HealthcareRegistrationScreen extends StatefulWidget {
@@ -112,7 +113,7 @@ class _HealthcareRegistrationScreenState
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const HealthcareDashboardScreen(),
+            builder: (context) => const BabyListPage(),
           ),
         );
 

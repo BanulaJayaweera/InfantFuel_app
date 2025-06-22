@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'healthcare_dashboard_screen.dart';
-import 'weight_graph_screen.dart'; // Import the weight graph screen
-class HealthcareWeightScreen extends StatefulWidget {
+import 'weight_graph_screen.dart'; // Import the weight graph screen (can be reused or replaced with height graph if needed)
+
+class HealthcareHeightScreen extends StatefulWidget {
   final String babyId; // Added to receive babyId from HealthcareDashboardScreen
 
-  const HealthcareWeightScreen({super.key, required this.babyId});
+  const HealthcareHeightScreen({super.key, required this.babyId});
 
   @override
-  State<HealthcareWeightScreen> createState() => _WeightTrackingScreenState();
+  State<HealthcareHeightScreen> createState() => _HeightTrackingScreenState();
 }
 
-class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
+class _HeightTrackingScreenState extends State<HealthcareHeightScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _weightController = TextEditingController();
+  final _heightController = TextEditingController();
   DateTime? _selectedDate;
 
   Future<void> _selectDate(BuildContext context) async {
@@ -30,12 +31,12 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
     }
   }
 
-  String? _validateWeight(String? value) {
+  String? _validateHeight(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter a weight';
+      return 'Please enter a height';
     }
     if (double.tryParse(value) == null || double.parse(value) <= 0) {
-      return 'Please enter a valid weight';
+      return 'Please enter a valid height';
     }
     return null;
   }
@@ -44,10 +45,10 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       // Form is valid, save to Firestore
       FirebaseFirestore.instance
-          .collection('weight tracking')
+          .collection('height tracking')
           .add({
             'babyId': widget.babyId,
-            'weight': double.parse(_weightController.text),
+            'height': double.parse(_heightController.text),
             'date': _selectedDate,
             'timestamp': FieldValue.serverTimestamp(),
           })
@@ -55,7 +56,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
             // Show confirmation and navigate back to HealthcareDashboardScreen
             ScaffoldMessenger.of(
               context,
-            ).showSnackBar(const SnackBar(content: Text('Weight entry saved')));
+            ).showSnackBar(const SnackBar(content: Text('Height entry saved')));
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -67,10 +68,10 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
           })
           .catchError((error) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Failed to save weight entry')),
+              const SnackBar(content: Text('Failed to save height entry')),
             );
           });
-      _weightController.clear();
+      _heightController.clear();
       setState(() {
         _selectedDate = null;
       });
@@ -83,7 +84,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
 
   @override
   void dispose() {
-    _weightController.dispose();
+    _heightController.dispose();
     super.dispose();
   }
 
@@ -193,7 +194,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        "Weight tracking",
+                        "Height tracking",
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -201,7 +202,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                       ),
                     ),
                   ),
-                  // Weight Details Section
+                  // Height Details Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Row(
@@ -227,7 +228,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               Text("At birth", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "2.000kg",
+                                "50.0cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -264,7 +265,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               Text("Current", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "4.000kg",
+                                "60.0cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -301,7 +302,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               Text("Change", style: TextStyle(fontSize: 16)),
                               SizedBox(height: 5),
                               Text(
-                                "2.000kg",
+                                "10.0cm",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -318,7 +319,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Image.asset(
-                      'images/weight_graph.png',
+                      'images/height_graph.png', // Updated to height graph
                       fit: BoxFit.contain,
                       errorBuilder: (context, error, stackTrace) {
                         return const Icon(
@@ -339,9 +340,9 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
       ),
     );
   },
-  child: const Text('View Weight Graph'),
+  child: const Text('View Height Graph'), // Updated label
 ),
-                  // Weight and Date Input Fields
+                  // Height and Date Input Fields
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30.0,
@@ -352,9 +353,9 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Weight Input
+                          // Height Input
                           const Text(
-                            "Enter Weight (kg)",
+                            "Enter Height (cm)",
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -362,12 +363,12 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                           ),
                           const SizedBox(height: 10),
                           TextFormField(
-                            controller: _weightController,
+                            controller: _heightController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
                               filled: true, // <-- Fill with color
                               fillColor: Colors.white, // <-- White background
-                              hintText: 'e.g., 4.500',
+                              hintText: 'e.g., 60.0',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -376,7 +377,7 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                                 vertical: 15,
                               ),
                             ),
-                            validator: _validateWeight,
+                            validator: _validateHeight,
                           ),
                           const SizedBox(height: 20),
                           // Date Picker

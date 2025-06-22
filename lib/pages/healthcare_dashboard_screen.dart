@@ -2,16 +2,20 @@ import 'package:flutter/material.dart';
 import 'vaccination_tracking_screen.dart';
 import 'healthcare_weight_screen.dart';
 import 'baby_list.dart';
+import 'healthcare_height_screen.dart';
+import 'BMI.dart';
 
 class HealthcareDashboardScreen extends StatelessWidget {
-  const HealthcareDashboardScreen({super.key});
+  final String babyId; // Receive babyId from BabyListPage
+
+  const HealthcareDashboardScreen({super.key, required this.babyId});
 
   // Placeholder actions for the clickable options
   void _onVaccineTapped(BuildContext context) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => const VaccinationTrackingScreen(),
+        builder: (context) => VaccinationTrackingScreen(babyId: babyId),
       ),
     );
   }
@@ -19,7 +23,9 @@ class HealthcareDashboardScreen extends StatelessWidget {
   void _onWeightTapped(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const HealthcareWeightScreen()),
+      MaterialPageRoute(
+        builder: (context) => HealthcareWeightScreen(babyId: babyId),
+      ),
     );
   }
 
@@ -31,12 +37,22 @@ class HealthcareDashboardScreen extends StatelessWidget {
     print('Navigate to Medication Screen (to be implemented)');
   }
 
-  void _onHeightTapped() {
-    print('Navigate to Height Tracking Screen (to be implemented)');
+  void _onHeightTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HealthcareHeightScreen(babyId: babyId),
+      ),
+    );
   }
 
-  void _onBMITapped() {
-    print('Navigate to BMI Tracking Screen (to be implemented)');
+  void _onBMITapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HealthcareBMIScreen(babyId: babyId),
+      ),
+    );
   }
 
   @override
@@ -290,7 +306,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                         ),
                         // Height Option
                         GestureDetector(
-                          onTap: _onHeightTapped,
+                          onTap: () => _onHeightTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
@@ -327,7 +343,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                         ),
                         // BMI Option
                         GestureDetector(
-                          onTap: _onBMITapped,
+                          onTap: () => _onBMITapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             decoration: BoxDecoration(
@@ -378,7 +394,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
             icon: Icon(Icons.dashboard),
             label: 'Dashboard',
           ),
-          BottomNavigationBarItem(icon: Icon(Icons.arrow_back), label: 'back'),
+          BottomNavigationBarItem(icon: Icon(Icons.arrow_back), label: 'Back'),
         ],
         currentIndex: 0, // Dashboard tab is active
         selectedItemColor: const Color(0xFF6A5ACD),

@@ -70,7 +70,7 @@ class BabyListPage extends StatelessWidget {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 30.0,
+                            horizontal: 20.0,
                             vertical: 10.0,
                           ),
                           decoration: BoxDecoration(
@@ -97,6 +97,7 @@ class BabyListPage extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 100),
                   // Baby List Section
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -104,16 +105,15 @@ class BabyListPage extends StatelessWidget {
                       vertical: 20.0,
                     ),
                     child: Column(
-                      children: List.generate(5, (index) {
-                        final babyName = 'Baby${index + 1}';
-                        return GestureDetector(
+                      children: [
+                        // Baby1 Option
+                        GestureDetector(
                           onTap: () {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder:
-                                    (context) =>
-                                        const HealthcareDashboardScreen(),
+                                builder: (context) =>
+                                    HealthcareDashboardScreen(babyId: "Baby 1"),
                               ),
                             );
                           },
@@ -140,9 +140,9 @@ class BabyListPage extends StatelessWidget {
                                   size: 40,
                                 ),
                                 const SizedBox(width: 20),
-                                Text(
-                                  babyName,
-                                  style: const TextStyle(
+                                const Text(
+                                  "Baby 1",
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -150,38 +150,61 @@ class BabyListPage extends StatelessWidget {
                               ],
                             ),
                           ),
-                        );
-                      }),
+                        ),
+                        // Baby2 Option
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    HealthcareDashboardScreen(babyId: "Baby 2"),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(16.0),
+                            margin: const EdgeInsets.only(bottom: 20.0),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.grey.withAlpha(51),
+                                  spreadRadius: 2,
+                                  blurRadius: 5,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.child_friendly,
+                                  color: Color(0xFF6A5ACD),
+                                  size: 40,
+                                ),
+                                const SizedBox(width: 20),
+                                const Text(
+                                  "Baby 2",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 70),
+                  const SizedBox(height: 400),
                 ],
               ),
             ),
           ],
         ),
-      ),
-      // Bottom Navigation Bar with 2 buttons
-      bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard),
-            label: 'Dashboard',
-          ),
-        ],
-        currentIndex: 0, // Dashboard tab is active
-        selectedItemColor: const Color(0xFF6A5ACD),
-        unselectedItemColor: Colors.grey,
-        onTap: (index) {
-          if (index == 0) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const HealthcareDashboardScreen(),
-              ),
-            );
-          }
-        },
       ),
     );
   }
