@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'healthcare_dashboard_screen.dart';
+import 'page3.dart'; // Assume this is the login screen widget
+import 'package:firebase_auth/firebase_auth.dart';
 
 class BabyListPage extends StatelessWidget {
   const BabyListPage({super.key});
@@ -112,8 +114,10 @@ class BabyListPage extends StatelessWidget {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    HealthcareDashboardScreen(babyId: "Baby 1"),
+                                builder:
+                                    (context) => HealthcareDashboardScreen(
+                                      babyId: "Baby 1",
+                                    ),
                               ),
                             );
                           },
@@ -157,11 +161,14 @@ class BabyListPage extends StatelessWidget {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    HealthcareDashboardScreen(babyId: "Baby 2"),
+                                builder:
+                                    (context) => HealthcareDashboardScreen(
+                                      babyId: "Baby 2",
+                                    ),
                               ),
                             );
                           },
+
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
@@ -199,11 +206,35 @@ class BabyListPage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 400),
+                  const SizedBox(
+                    height: 300,
+                  ), // Reduced height to accommodate button
                 ],
               ),
             ),
           ],
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(50.0),
+        color:  Color.fromARGB(255, 247, 220, 203),
+        child: ElevatedButton(
+          onPressed: () {
+            FirebaseAuth.instance.signOut();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => LoginScreen()),
+            );
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color.fromARGB(255, 194, 65, 65),
+            foregroundColor: Colors.white,
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+          child: const Text('Logout', style: TextStyle(fontSize: 18)),
         ),
       ),
     );

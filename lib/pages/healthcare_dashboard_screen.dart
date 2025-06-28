@@ -4,6 +4,7 @@ import 'healthcare_weight_screen.dart';
 import 'baby_list.dart';
 import 'healthcare_height_screen.dart';
 import 'BMI.dart';
+import 'healthcare_actions_screen.dart';
 
 class HealthcareDashboardScreen extends StatelessWidget {
   final String babyId; // Receive babyId from BabyListPage
@@ -29,8 +30,13 @@ class HealthcareDashboardScreen extends StatelessWidget {
     );
   }
 
-  void _onActionsTapped() {
-    print('Navigate to Actions Screen (to be implemented)');
+  void _onActionsTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HealthcareActionsScreen(babyId: babyId),
+      ),
+    );
   }
 
   void _onMedicationTapped() {
@@ -232,7 +238,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                         ),
                         // Actions Option
                         GestureDetector(
-                          onTap: _onActionsTapped,
+                          onTap: () => _onActionsTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
@@ -380,7 +386,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 70),
+                  const SizedBox(height: 90),
                 ],
               ),
             ),

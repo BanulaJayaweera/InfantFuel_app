@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'tracking_screen.dart';
 import 'health_screen.dart';
 import 'dashboard_screen.dart';
+import 'selectHP_page.dart';
 
 class ExtrasScreen extends StatelessWidget {
   const ExtrasScreen({super.key});
 
-  void _onContactHealthcareTapped() {
-    print(
-      'Navigate to Contact Healthcare Professional Screen (to be implemented)',
+  void _onContactHealthcareTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SelectHPPage(babyName: 'YourBabyName'),
+      ),
     );
   }
 
@@ -119,7 +123,7 @@ class ExtrasScreen extends StatelessWidget {
                       children: [
                         // Contact Healthcare Professional Option
                         GestureDetector(
-                          onTap: _onContactHealthcareTapped,
+                          onTap: () => _onContactHealthcareTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             margin: const EdgeInsets.only(bottom: 20.0),
