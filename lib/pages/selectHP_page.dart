@@ -4,6 +4,7 @@ import 'contactHP_page.dart'; // Import ContactHPPage
 import 'dashboard_screen.dart';
 import 'tracking_screen.dart';
 import 'health_screen.dart';
+import 'extras.dart'; // Import ExtrasScreen
 
 class SelectHPPage extends StatefulWidget {
   final String babyName;
@@ -300,6 +301,12 @@ class _SelectHPPageState extends State<SelectHPPage> {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const HealthScreen()),
+            );
+          } 
+          else if (index == 3) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ExtrasScreen()),
             );
           }
         },

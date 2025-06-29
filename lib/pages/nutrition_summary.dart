@@ -137,9 +137,9 @@ class _NutritionTrackingSummaryState extends State<NutritionTrackingSummary> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
-                            "Daily Nutrition Summary (June 21, 2025)",
-                            style: TextStyle(
+                          Text(
+                            "Daily Nutrition Summary (${now.day}/${now.month}/${now.year})",
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: Color(0xFF6A5ACD),
