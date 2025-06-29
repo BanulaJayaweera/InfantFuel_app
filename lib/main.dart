@@ -1,10 +1,10 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'pages/page1.dart'; // Import the WelcomeScreen
+import 'pages/page1.dart'; 
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Ensure Flutter is initialized
-  await Firebase.initializeApp(); // Initialize Firebase
+  WidgetsFlutterBinding.ensureInitialized(); 
+  await Firebase.initializeApp(); 
   runApp(const InfantFuelApp());
 }
 
@@ -14,16 +14,16 @@ class InfantFuelApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false, // Hides the debug banner
-      title: 'InfantFuel', // App title
+      debugShowCheckedModeBanner: false, 
+      title: 'InfantFuel', 
       theme: ThemeData(
-        primarySwatch: Colors.blue, // Customize the primary color if needed
+        primarySwatch: Colors.blue, 
         scaffoldBackgroundColor: const Color.fromARGB(
           255,
           243,
           241,
           240,
-        ), // Default background color for all screens
+        ), // 
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(

@@ -196,9 +196,12 @@ class _NutritionTrackingSummaryState extends State<NutritionTrackingSummary> {
                                         return const Center(child: CircularProgressIndicator());
                                       }
 
+                                      print('Breastfeeding data: ${breastfeedingSnapshot.data!.docs}'); // Debug print
                                       for (var doc in breastfeedingSnapshot.data!.docs) {
                                         final data = doc.data() as Map<String, dynamic>;
-                                        totalCalories += (data['calories'] as num?)?.toDouble() ?? 0.0;
+                                        // Check for both 'calories' and 'calories_kcal' to handle potential field name mismatch
+                                        totalCalories += (data['calories'] as num?)?.toDouble() ?? 
+                                                        (data['kcal'] as num?)?.toDouble() ?? 0.0;
                                       }
 
                                       return Column(
