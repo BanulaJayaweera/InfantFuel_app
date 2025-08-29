@@ -18,7 +18,7 @@ class HealthScreen extends StatelessWidget {
   void _onVaccinationTapped(context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => VaccinationLogScreen(babyId: '13')),
+      MaterialPageRoute(builder: (context) => VaccinationLogScreen(babyId: 'Baby13')),
     );
   }
 
