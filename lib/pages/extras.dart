@@ -16,10 +16,6 @@ class ExtrasScreen extends StatelessWidget {
     );
   }
 
-  void _onArticlesTapped() {
-    print('Navigate to Articles Screen (to be implemented)');
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -158,46 +154,10 @@ class ExtrasScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Articles Option
-                        GestureDetector(
-                          onTap: _onArticlesTapped,
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withAlpha(51),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.article,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  "Articles",
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 300),
+                  const SizedBox(height: 400),
                 ],
               ),
             ),

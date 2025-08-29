@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'tracking_screen.dart'; // Import TrackingScreen for navigation
 import 'health_screen.dart';
 import 'extras.dart';
@@ -19,7 +20,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     setState(() {
       _selectedIndex = index;
     });
-    // Navigation for other screens
+    // Navigation for other screens (without babyId)
     switch (index) {
       case 0:
         // Already on DashboardScreen
@@ -52,14 +53,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: SafeArea(
         child: Stack(
           children: [
-            // Curved background shape (matching SignupScreen, ParentRegistrationScreen, etc.)
+            // Curved background shape
             Positioned(
               top: 0,
               left: 0,
               right: 0,
               child: Container(
-                height: 1500,
-                width: 500,
+                height: 2000,
+                width: 1000,
                 decoration: const BoxDecoration(
                   color: Color.fromARGB(255, 247, 220, 203),
                   borderRadius: BorderRadius.only(),
@@ -77,7 +78,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     child: Column(
                       children: [
                         Image.asset(
-                          'images/dashboard.png', // Matching the path used in other screens
+                          'images/dashboard.png',
                           width: 300,
                           height: 300,
                           fit: BoxFit.contain,
@@ -106,7 +107,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
 
-                  // Recent Activity Section
+                  // Recent Activity Section (Nutrition Tracking)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Container(
@@ -116,7 +117,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withAlpha(51), // 0.2 * 255 = 51
+                            color: Colors.grey.withAlpha(51),
                             spreadRadius: 2,
                             blurRadius: 5,
                             offset: const Offset(0, 3),
@@ -134,38 +135,211 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.fastfood,
-                                color: Color(0xFF6A5ACD),
-                              ),
-                              const SizedBox(width: 10),
-                              // Placeholder for last feed
-                              Text(
-                                "Last feed: 5 hours ago", // Placeholder value
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(Icons.bed, color: Color(0xFF6A5ACD)),
-                              const SizedBox(width: 10),
-                              // Placeholder for last sleep
-                              Text(
-                                "Last sleep: 6 hours", // Placeholder value
-                                style: const TextStyle(fontSize: 16),
-                              ),
-                            ],
+                          // Nested StreamBuilders similar to Recent Actions to reliably combine latest entries
+                          StreamBuilder<QuerySnapshot>(
+                            stream:
+                                FirebaseFirestore.instance
+                                    .collection('fluids tracking')
+                                    .orderBy('timestamp', descending: true)
+                                    .limit(5)
+                                    .snapshots(),
+                            builder: (context, fluidsSnapshot) {
+                              return StreamBuilder<QuerySnapshot>(
+                                stream:
+                                    FirebaseFirestore.instance
+                                        .collection('solids tracking')
+                                        .orderBy('timestamp', descending: true)
+                                        .limit(5)
+                                        .snapshots(),
+                                builder: (context, solidsSnapshot) {
+                                  return StreamBuilder<QuerySnapshot>(
+                                    stream:
+                                        FirebaseFirestore.instance
+                                            .collection(
+                                              'breastfeeding sessions',
+                                            )
+                                            .orderBy(
+                                              'timestamp',
+                                              descending: true,
+                                            )
+                                            .limit(5)
+                                            .snapshots(),
+                                    builder: (context, breastfeedingSnapshot) {
+                                      if (fluidsSnapshot.connectionState ==
+                                              ConnectionState.waiting ||
+                                          solidsSnapshot.connectionState ==
+                                              ConnectionState.waiting ||
+                                          breastfeedingSnapshot
+                                                  .connectionState ==
+                                              ConnectionState.waiting) {
+                                        return const Center(
+                                          child: CircularProgressIndicator(),
+                                        );
+                                      }
+                                      if (fluidsSnapshot.hasError ||
+                                          solidsSnapshot.hasError ||
+                                          breastfeedingSnapshot.hasError) {
+                                        return const Text('Error loading data');
+                                      }
+
+                                      final allEntries =
+                                          <Map<String, dynamic>>[];
+
+                                      // Fluids entries
+                                      final fluidsDocs =
+                                          fluidsSnapshot.data?.docs ?? [];
+                                      for (final doc in fluidsDocs) {
+                                        final ts =
+                                            (doc.data()
+                                                    as Map<
+                                                      String,
+                                                      dynamic
+                                                    >)['timestamp']
+                                                as Timestamp?;
+                                        if (ts != null) {
+                                          allEntries.add({
+                                            'type': 'Fluids',
+                                            'timestamp': ts,
+                                            'doc': doc.data(),
+                                          });
+                                        }
+                                      }
+
+                                      // Solids entries
+                                      final solidsDocs =
+                                          solidsSnapshot.data?.docs ?? [];
+                                      for (final doc in solidsDocs) {
+                                        final ts =
+                                            (doc.data()
+                                                    as Map<
+                                                      String,
+                                                      dynamic
+                                                    >)['timestamp']
+                                                as Timestamp?;
+                                        if (ts != null) {
+                                          allEntries.add({
+                                            'type': 'Solids',
+                                            'timestamp': ts,
+                                            'doc': doc.data(),
+                                          });
+                                        }
+                                      }
+
+                                      // Breastfeeding entries
+                                      final bfDocs =
+                                          breastfeedingSnapshot.data?.docs ??
+                                          [];
+                                      for (final doc in bfDocs) {
+                                        final ts =
+                                            (doc.data()
+                                                    as Map<
+                                                      String,
+                                                      dynamic
+                                                    >)['timestamp']
+                                                as Timestamp?;
+                                        if (ts != null) {
+                                          allEntries.add({
+                                            'type': 'Breastfeeding',
+                                            'timestamp': ts,
+                                            'doc': doc.data(),
+                                          });
+                                        }
+                                      }
+
+                                      // Sort and take latest 3
+                                      allEntries.sort(
+                                        (a, b) => (b['timestamp'] as Timestamp)
+                                            .compareTo(
+                                              a['timestamp'] as Timestamp,
+                                            ),
+                                      );
+                                      final latestThree =
+                                          allEntries.take(3).toList();
+
+                                      if (latestThree.isEmpty) {
+                                        return const Text(
+                                          'No nutrition data available',
+                                        );
+                                      }
+
+                                      return Column(
+                                        children:
+                                            latestThree.map((entry) {
+                                              final timeAgo = calculateTimeAgo(
+                                                entry['timestamp'] as Timestamp,
+                                              );
+                                              final type =
+                                                  entry['type'] as String;
+                                              IconData icon = Icons.fastfood;
+                                              if (type == 'Fluids')
+                                                icon = Icons.local_drink;
+                                              if (type == 'Breastfeeding')
+                                                icon =
+                                                    Icons
+                                                        .child_care; // Use child_care for breastfeeding
+                                              // Fallback if nursing icon is unavailable
+                                              if (icon == null)
+                                                icon = Icons.fastfood;
+
+                                              String label = type;
+                                              final docData =
+                                                  entry['doc']
+                                                      as Map<String, dynamic>?;
+                                              if (docData != null) {
+                                                if (type == 'Solids' &&
+                                                    docData['foodName'] !=
+                                                        null) {
+                                                  label =
+                                                      'Solids: ${docData['foodName']}';
+                                                } else if (type == 'Fluids' &&
+                                                    docData['amount'] != null) {
+                                                  label =
+                                                      'Fluids: ${docData['amount']}';
+                                                } else if (type ==
+                                                    'Breastfeeding') {
+                                                  label = 'Breastfeeding';
+                                                }
+                                              }
+
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 5.0,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    Icon(
+                                                      icon,
+                                                      color: const Color(
+                                                        0xFF6A5ACD,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 10),
+                                                    Expanded(
+                                                      child: Text(
+                                                        "$label: $timeAgo",
+                                                        style: const TextStyle(
+                                                          fontSize: 16,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                      );
+                                    },
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ],
                       ),
                     ),
                   ),
                   const SizedBox(height: 20),
-                  // Recent Actions Section
+                  // Recent Actions Section (Vaccination/Medication)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 30.0),
                     child: Container(
@@ -175,7 +349,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         borderRadius: BorderRadius.circular(10),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withAlpha(51), // 0.2 * 255 = 51
+                            color: Colors.grey.withAlpha(51),
                             spreadRadius: 2,
                             blurRadius: 5,
                             offset: const Offset(0, 3),
@@ -193,43 +367,117 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(Icons.scale, color: Color(0xFF6A5ACD)),
-                              const SizedBox(width: 10),
-                              // Placeholder for baby weight
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Baby's weight updated",
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  Text(
-                                    "Current weight: 3kg", // Placeholder value
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
+                          StreamBuilder<QuerySnapshot>(
+                            stream:
+                                FirebaseFirestore.instance
+                                    .collection('vaccination_history')
+                                    .orderBy('timestamp', descending: true)
+                                    .limit(1)
+                                    .snapshots(),
+                            builder: (context, vaccinationSnapshot) {
+                              return StreamBuilder<QuerySnapshot>(
+                                stream:
+                                    FirebaseFirestore.instance
+                                        .collection('medication_history')
+                                        .orderBy('timestamp', descending: true)
+                                        .limit(1)
+                                        .snapshots(),
+                                builder: (context, medicationSnapshot) {
+                                  if (vaccinationSnapshot.connectionState ==
+                                          ConnectionState.waiting ||
+                                      medicationSnapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                    return const Center(
+                                      child: CircularProgressIndicator(),
+                                    );
+                                  }
+                                  if (vaccinationSnapshot.hasError ||
+                                      medicationSnapshot.hasError) {
+                                    return const Text('Error loading data');
+                                  }
+
+                                  final allEntries = <Map<String, dynamic>>[];
+                                  if (vaccinationSnapshot
+                                          .data
+                                          ?.docs
+                                          .isNotEmpty ??
+                                      false) {
+                                    allEntries.add({
+                                      'type': 'vaccination',
+                                      'timestamp':
+                                          vaccinationSnapshot
+                                                  .data!
+                                                  .docs
+                                                  .first['timestamp']
+                                              as Timestamp,
+                                    });
+                                  }
+                                  if (medicationSnapshot
+                                          .data
+                                          ?.docs
+                                          .isNotEmpty ??
+                                      false) {
+                                    allEntries.add({
+                                      'type': 'medication',
+                                      'timestamp':
+                                          medicationSnapshot
+                                                  .data!
+                                                  .docs
+                                                  .first['timestamp']
+                                              as Timestamp,
+                                    });
+                                  }
+
+                                  allEntries.sort(
+                                    (a, b) => b['timestamp'].compareTo(
+                                      a['timestamp'],
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.medical_services,
-                                color: Color(0xFF6A5ACD),
-                              ),
-                              const SizedBox(width: 10),
-                              // Placeholder for doctor visit
-                              const Text(
-                                "Visit to the doctor",
-                                style: TextStyle(fontSize: 16),
-                              ),
-                            ],
+                                  );
+                                  final latestThree =
+                                      allEntries.take(3).toList();
+
+                                  return Column(
+                                    children:
+                                        latestThree.map((entry) {
+                                          final timeAgo = calculateTimeAgo(
+                                            entry['timestamp'] as Timestamp,
+                                          );
+                                          final actionType =
+                                              entry['type'] == 'vaccination'
+                                                  ? 'Vaccination'
+                                                  : 'Medication';
+                                          return Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 5.0,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Icon(
+                                                  entry['type'] == 'vaccination'
+                                                      ? Icons.medical_services
+                                                      : Icons.medication,
+                                                  color: const Color(
+                                                    0xFF6A5ACD,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 10),
+                                                const SizedBox(height: 50),
+                                                Expanded(
+                                                  child: Text(
+                                                    "$actionType: $timeAgo",
+                                                    style: const TextStyle(
+                                                      fontSize: 16,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          );
+                                        }).toList(),
+                                  );
+                                },
+                              );
+                            },
                           ),
                         ],
                       ),
@@ -259,5 +507,70 @@ class _DashboardScreenState extends State<DashboardScreen> {
         onTap: _onItemTapped,
       ),
     );
+  }
+
+  // Combine nutrition streams
+  Stream<List<Map<String, dynamic>>> combineNutritionStreams() async* {
+    final List<Map<String, dynamic>> streamConfigs = [
+      {
+        'collection': 'fluids tracking',
+        'type': 'Fluids',
+        'stream':
+            FirebaseFirestore.instance
+                .collection('fluids tracking')
+                .orderBy('timestamp', descending: true)
+                .limit(5)
+                .snapshots(),
+      },
+      {
+        'collection': 'solids tracking',
+        'type': 'Solids',
+        'stream':
+            FirebaseFirestore.instance
+                .collection('solids tracking')
+                .orderBy('timestamp', descending: true)
+                .limit(5)
+                .snapshots(),
+      },
+      {
+        'collection': 'breastfeeding sessions',
+        'type': 'Breastfeeding',
+        'stream':
+            FirebaseFirestore.instance
+                .collection('breastfeeding sessions')
+                .orderBy('timestamp', descending: true)
+                .limit(5)
+                .snapshots(),
+      },
+    ];
+
+    List<Map<String, dynamic>> allEntries = [];
+    for (final config in streamConfigs) {
+      final stream = config['stream'] as Stream<QuerySnapshot>;
+      final type = config['type'] as String;
+      await for (final snapshot in stream) {
+        allEntries.addAll(
+          snapshot.docs.map((doc) {
+            return {'type': type, 'timestamp': doc['timestamp'] as Timestamp};
+          }).toList(),
+        );
+      }
+    }
+    allEntries.sort((a, b) => b['timestamp'].compareTo(a['timestamp']));
+    yield allEntries;
+  }
+
+  // Calculate time ago from timestamp
+  String calculateTimeAgo(Timestamp timestamp) {
+    final now = DateTime.now();
+    final difference = now.difference(timestamp.toDate());
+
+    if (difference.inMinutes < 60) {
+      return '${difference.inMinutes} minutes ago';
+    } else if (difference.inHours < 24) {
+      return '${difference.inHours} hours ago';
+    } else {
+      return '${difference.inDays} days ago';
+    }
   }
 }
