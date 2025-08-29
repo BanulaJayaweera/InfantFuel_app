@@ -3,6 +3,19 @@ import 'tracking_screen.dart';
 import 'health_screen.dart';
 import 'dashboard_screen.dart';
 import 'selectHP_page.dart';
+import 'page3.dart';
+// Placeholder for Page3 (replace with your actual Page3 implementation)
+class Page3 extends StatelessWidget {
+  const Page3({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Page 3')),
+      body: const Center(child: Text('This is Page 3')),
+    );
+  }
+}
 
 class ExtrasScreen extends StatelessWidget {
   const ExtrasScreen({super.key});
@@ -13,6 +26,13 @@ class ExtrasScreen extends StatelessWidget {
       MaterialPageRoute(
         builder: (context) => const SelectHPPage(babyName: 'YourBabyName'),
       ),
+    );
+  }
+
+  void _onLogoutTapped(BuildContext context) {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const LoginScreen()),
     );
   }
 
@@ -157,7 +177,40 @@ class ExtrasScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 400),
+                  const SizedBox(height: 300),
+                  // Logout Button
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                    child: GestureDetector(
+                      onTap: () => _onLogoutTapped(context),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 15.0),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.grey.withAlpha(51),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            "Logout",
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

@@ -5,6 +5,7 @@ import 'baby_list.dart';
 import 'healthcare_height_screen.dart';
 import 'BMI.dart';
 import 'healthcare_actions_screen.dart';
+import 'healthcare_medication.dart ';
 
 class HealthcareDashboardScreen extends StatelessWidget {
   final String babyId; // Receive babyId from BabyListPage
@@ -39,8 +40,11 @@ class HealthcareDashboardScreen extends StatelessWidget {
     );
   }
 
-  void _onMedicationTapped() {
-    print('Navigate to Medication Screen (to be implemented)');
+  void _onMedicationTapped(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MedicationLogScreen()),
+    );
   }
 
   void _onHeightTapped(BuildContext context) {
@@ -273,43 +277,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                             ),
                           ),
                         ),
-                        // Medication Option
-                        GestureDetector(
-                          onTap: _onMedicationTapped,
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            margin: const EdgeInsets.only(bottom: 20.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withAlpha(51),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.medical_services,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  "Medication",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+
                         // Height Option
                         GestureDetector(
                           onTap: () => _onHeightTapped(context),
@@ -386,7 +354,7 @@ class HealthcareDashboardScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 90),
+                  const SizedBox(height: 200),
                 ],
               ),
             ),

@@ -173,29 +173,13 @@ class TrackingScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
+                          // Removed the Growth Tracking "Summary" TextButton so only the title remains
+                          children: const [
+                            Text(
                               "Growth Tracking",
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            TextButton(
-                              onPressed: _onGrowthSummaryTapped,
-                              child: const Row(
-                                children: [
-                                  Text(
-                                    "Summary",
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Color(0xFF6A5ACD),
-                                    ),
-                                  ),
-                                  SizedBox(width: 5),
-                                  Icon(Icons.menu, color: Color(0xFF6A5ACD)),
-                                ],
                               ),
                             ),
                           ],
