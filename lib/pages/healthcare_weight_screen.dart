@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'healthcare_dashboard_screen.dart';
 import 'weight_graph_screen.dart'; // Import the weight graph screen
+
 class HealthcareWeightScreen extends StatefulWidget {
   final String babyId; // Added to receive babyId from HealthcareDashboardScreen
 
@@ -15,6 +16,60 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
   final _formKey = GlobalKey<FormState>();
   final _weightController = TextEditingController();
   DateTime? _selectedDate;
+  double? _birthWeight;
+  double? _currentWeight;
+  double? _weightChange;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchWeightData();
+  }
+
+  Future<void> _fetchWeightData() async {
+  try {
+    // Fetch birth weight from baby details
+    final birthSnapshot = await FirebaseFirestore.instance
+        .collection('baby details')
+        .where('babyName', isEqualTo: widget.babyId)
+        .limit(1)
+        .get();
+    if (birthSnapshot.docs.isNotEmpty) {
+      final data = birthSnapshot.docs.first.data() as Map<String, dynamic>;
+      print('Baby details data: $data'); // Debug log
+      _birthWeight = data['birthWeight'] != null
+          ? (data['birthWeight'] as num).toDouble()
+          : null; // Use correct field name and handle null
+    } else {
+      print('No document found for babyName: ${widget.babyId}');
+    }
+
+    // Fetch latest weight from weight tracking
+    final weightSnapshot = await FirebaseFirestore.instance
+        .collection('weight tracking')
+        .where('babyId', isEqualTo: widget.babyId)
+        .orderBy('date', descending: true)
+        .limit(1)
+        .get();
+    if (weightSnapshot.docs.isNotEmpty) {
+      _currentWeight = (weightSnapshot.docs.first.data()['weight'] as num).toDouble();
+    }
+
+    // Calculate weight change
+    if (_birthWeight != null && _currentWeight != null) {
+      _weightChange = _currentWeight! - _birthWeight!;
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  } catch (e) {
+    print('Error fetching weight data: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Failed to load weight data')),
+    );
+  }
+}
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
@@ -52,16 +107,14 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
             'timestamp': FieldValue.serverTimestamp(),
           })
           .then((value) {
-            // Show confirmation and navigate back to HealthcareDashboardScreen
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('Weight entry saved')));
+            // Update current weight and recalculate change
+            _fetchWeightData();
+            ScaffoldMessenger.of(context)
+                .showSnackBar(const SnackBar(content: Text('Weight entry saved')));
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) =>
-                        HealthcareDashboardScreen(babyId: widget.babyId),
+                builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
               ),
             );
           })
@@ -75,9 +128,8 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
         _selectedDate = null;
       });
     } else if (_selectedDate == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Please select a date')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Please select a date')));
     }
   }
 
@@ -222,21 +274,21 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               ),
                             ],
                           ),
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Text("At birth", style: TextStyle(fontSize: 16)),
-                              SizedBox(height: 5),
+                              const Text("At birth", style: TextStyle(fontSize: 16)),
+                              const SizedBox(height: 5),
                               Text(
-                                "2.000kg",
-                                style: TextStyle(
+                                _birthWeight?.toStringAsFixed(3) ?? 'N/A',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
                               Text(
-                                "9 May 2024",
-                                style: TextStyle(
+                                _birthWeight == null ? '' : 'Fetched from records',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
                                 ),
@@ -259,21 +311,21 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               ),
                             ],
                           ),
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Text("Current", style: TextStyle(fontSize: 16)),
-                              SizedBox(height: 5),
+                              const Text("Current", style: TextStyle(fontSize: 16)),
+                              const SizedBox(height: 5),
                               Text(
-                                "4.000kg",
-                                style: TextStyle(
+                                _currentWeight?.toStringAsFixed(3) ?? 'N/A',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              SizedBox(height: 5),
+                              const SizedBox(height: 5),
                               Text(
-                                "9 June 2024",
-                                style: TextStyle(
+                                _currentWeight == null ? '' : 'Latest entry',
+                                style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
                                 ),
@@ -296,13 +348,13 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               ),
                             ],
                           ),
-                          child: const Column(
+                          child: Column(
                             children: [
-                              Text("Change", style: TextStyle(fontSize: 16)),
-                              SizedBox(height: 5),
+                              const Text("Change", style: TextStyle(fontSize: 16)),
+                              const SizedBox(height: 5),
                               Text(
-                                "2.000kg",
-                                style: TextStyle(
+                                _weightChange?.toStringAsFixed(3) ?? 'N/A',
+                                style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -329,18 +381,18 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                       },
                     ),
                   ),
-                   const SizedBox(height: 10),
+                  const SizedBox(height: 10),
                   ElevatedButton(
-  onPressed: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => WeightGraphScreen(babyId: widget.babyId),
-      ),
-    );
-  },
-  child: const Text('View Weight Graph'),
-),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => WeightGraphScreen(babyId: widget.babyId),
+                        ),
+                      );
+                    },
+                    child: const Text('View Weight Graph'),
+                  ),
                   // Weight and Date Input Fields
                   Padding(
                     padding: const EdgeInsets.symmetric(
@@ -365,8 +417,8 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                             controller: _weightController,
                             keyboardType: TextInputType.number,
                             decoration: InputDecoration(
-                              filled: true, // <-- Fill with color
-                              fillColor: Colors.white, // <-- White background
+                              filled: true,
+                              fillColor: Colors.white,
                               hintText: 'e.g., 4.500',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -396,25 +448,21 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                                 vertical: 15,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    Colors
-                                        .white, // <-- White background for date field
+                                color: Colors.white,
                                 border: Border.all(color: Colors.grey),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     _selectedDate == null
                                         ? 'Select Date'
                                         : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
                                     style: TextStyle(
-                                      color:
-                                          _selectedDate == null
-                                              ? Colors.grey
-                                              : Colors.black,
+                                      color: _selectedDate == null
+                                          ? Colors.grey
+                                          : Colors.black,
                                     ),
                                   ),
                                   const Icon(Icons.calendar_today),
@@ -439,7 +487,6 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
                               style: TextStyle(fontSize: 18),
                             ),
                           ),
-                          
                         ],
                       ),
                     ),
@@ -467,18 +514,14 @@ class _WeightTrackingScreenState extends State<HealthcareWeightScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) =>
-                        HealthcareDashboardScreen(babyId: widget.babyId),
+                builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
               ),
             );
           } else if (index == 1) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder:
-                    (context) =>
-                        HealthcareDashboardScreen(babyId: widget.babyId),
+                builder: (context) => HealthcareDashboardScreen(babyId: widget.babyId),
               ),
             );
           }

@@ -19,11 +19,15 @@ class _SelectHPPageState extends State<SelectHPPage> {
   String? _selectedHP;
   List<String> _hpNames = [];
   bool _isLoading = true; // Track loading state
+  bool _hasHPConnection = false; // Track if HP is already selected
+  Map<String, dynamic>? _currentHPDetails; // Store current HP details
+  bool _isResigning = false; // Track resign state to show dropdown
 
   @override
   void initState() {
     super.initState();
     _fetchHPNames();
+    _checkHPConnection();
   }
 
   Future<void> _fetchHPNames() async {
@@ -31,23 +35,20 @@ class _SelectHPPageState extends State<SelectHPPage> {
       _isLoading = true; // Show loading state
     });
     try {
-      final snapshot =
-          await FirebaseFirestore.instance
-              .collection('healthcare provider details')
-              .get();
+      final snapshot = await FirebaseFirestore.instance
+          .collection('healthcare provider details')
+          .get();
       if (snapshot.docs.isNotEmpty) {
         setState(() {
-          _hpNames =
-              snapshot.docs
-                  .map((doc) {
-                    final data = doc.data();
-                    return data['fullName'] != null &&
-                            data['fullName'] is String
-                        ? data['fullName'] as String
-                        : 'Unnamed HP';
-                  })
-                  .where((name) => name.isNotEmpty)
-                  .toList();
+          _hpNames = snapshot.docs
+              .map((doc) {
+                final data = doc.data();
+                return data['fullName'] != null && data['fullName'] is String
+                    ? data['fullName'] as String
+                    : 'Unnamed HP';
+              })
+              .where((name) => name.isNotEmpty)
+              .toList();
           _isLoading = false; // Stop loading
         });
       } else {
@@ -62,19 +63,71 @@ class _SelectHPPageState extends State<SelectHPPage> {
         _hpNames = ['Error loading HPs'];
         _isLoading = false; // Stop loading
       });
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to load HP names: $e')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('Failed to load HP names: $e')));
+    }
+  }
+
+  Future<void> _checkHPConnection() async {
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('parent-HP connections')
+          .where('babyName', isEqualTo: widget.babyName)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        final data = snapshot.docs.first.data();
+        setState(() {
+          _hasHPConnection = true;
+          _selectedHP = data['hpName'] as String?;
+          _fetchHPDetails(_selectedHP); // Fetch details of the current HP
+        });
+      }
+    } catch (e) {
+      print('Error checking HP connection: $e');
+    }
+  }
+
+  Future<void> _fetchHPDetails(String? hpName) async {
+    if (hpName == null) return;
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('healthcare provider details')
+          .where('fullName', isEqualTo: hpName)
+          .limit(1)
+          .get();
+      if (snapshot.docs.isNotEmpty) {
+        setState(() {
+          _currentHPDetails = snapshot.docs.first.data();
+        });
+      }
+    } catch (e) {
+      print('Error fetching HP details: $e');
     }
   }
 
   Future<void> _saveHPConnection(String babyName, String hpName) async {
     try {
+      // Remove existing connection if it exists
+      final existingSnapshot = await FirebaseFirestore.instance
+          .collection('parent-HP connections')
+          .where('babyName', isEqualTo: babyName)
+          .limit(1)
+          .get();
+      for (var doc in existingSnapshot.docs) {
+        await doc.reference.delete();
+      }
+      // Add new connection
       await FirebaseFirestore.instance.collection('parent-HP connections').add({
         'babyName': babyName,
         'hpName': hpName,
         'timestamp': FieldValue.serverTimestamp(),
       });
+      setState(() {
+        _hasHPConnection = true;
+        _isResigning = false;
+      });
+      _fetchHPDetails(hpName); // Update with new HP details
     } catch (e) {
       print('Error saving HP connection: $e');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -180,7 +233,7 @@ class _SelectHPPageState extends State<SelectHPPage> {
                     ),
                   ),
                   const SizedBox(height: 100),
-                  // HP Selection
+                  // HP Details or Selection
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 30.0,
@@ -199,21 +252,66 @@ class _SelectHPPageState extends State<SelectHPPage> {
                         const SizedBox(height: 10),
                         if (_isLoading)
                           const Center(child: CircularProgressIndicator())
-                        else
+                        else if (_hasHPConnection && !_isResigning)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Current HP: ${_currentHPDetails?['fullName'] ?? _selectedHP}',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              ),
+                              if (_currentHPDetails != null)
+                                ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'Email: ${_currentHPDetails?['email'] ?? 'Not available'}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                  Text(
+                                    'Phone: ${_currentHPDetails?['phone'] ?? 'Not available'}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                              const SizedBox(height: 20),
+                              ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _isResigning = true;
+                                    _selectedHP = null; // Reset selection for new choice
+                                  });
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF6A5ACD),
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size(double.infinity, 50),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  'Resign Healthcare Provider',
+                                  style: TextStyle(fontSize: 18),
+                                ),
+                              ),
+                            ],
+                          )
+                        else if (_isResigning || !_hasHPConnection)
                           DropdownButtonFormField<String>(
                             value: _selectedHP,
                             hint: const Text('Choose a Healthcare Provider'),
-                            items:
-                                _hpNames.map((name) {
-                                  return DropdownMenuItem<String>(
-                                    value: name,
-                                    child: Text(name),
-                                  );
-                                }).toList(),
+                            items: _hpNames.map((name) {
+                              return DropdownMenuItem<String>(
+                                value: name,
+                                child: Text(name),
+                              );
+                            }).toList(),
                             onChanged: (value) {
                               setState(() {
                                 _selectedHP = value;
                               });
+                              if (_isResigning) {
+                                _fetchHPDetails(value); // Preview new HP details
+                              }
                             },
                             decoration: InputDecoration(
                               filled: true,
@@ -229,27 +327,26 @@ class _SelectHPPageState extends State<SelectHPPage> {
                           ),
                         const SizedBox(height: 20),
                         ElevatedButton(
-                          onPressed:
-                              _selectedHP == null ||
-                                      _isLoading ||
-                                      _hpNames[0].startsWith('No') ||
-                                      _hpNames[0].startsWith('Error')
-                                  ? null
-                                  : () async {
-                                    await _saveHPConnection(
-                                      widget.babyName,
-                                      _selectedHP!,
-                                    );
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder:
-                                            (context) => ContactHPPage(
-                                              hpName: _selectedHP!,
-                                            ),
+                          onPressed: _selectedHP == null ||
+                                  _isLoading ||
+                                  _hpNames[0].startsWith('No') ||
+                                  _hpNames[0].startsWith('Error') ||
+                                  (_hasHPConnection && !_isResigning)
+                              ? null
+                              : () async {
+                                  await _saveHPConnection(
+                                    widget.babyName,
+                                    _selectedHP!,
+                                  );
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ContactHPPage(
+                                        hpName: _selectedHP!,
                                       ),
-                                    );
-                                  },
+                                    ),
+                                  );
+                                },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF6A5ACD),
                             foregroundColor: Colors.white,
@@ -302,8 +399,7 @@ class _SelectHPPageState extends State<SelectHPPage> {
               context,
               MaterialPageRoute(builder: (context) => const HealthScreen()),
             );
-          } 
-          else if (index == 3) {
+          } else if (index == 3) {
             Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ExtrasScreen()),

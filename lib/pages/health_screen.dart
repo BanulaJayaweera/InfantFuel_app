@@ -3,6 +3,7 @@ import 'package:infantfuel_mobile/pages/medication_screen.dart';
 import 'tracking_screen.dart';
 import 'dashboard_screen.dart';
 import 'extras.dart';
+import 'vaccination_screen.dart';
 
 class HealthScreen extends StatelessWidget {
   const HealthScreen({super.key});
@@ -14,8 +15,11 @@ class HealthScreen extends StatelessWidget {
     );
   }
 
-  void _onVaccinationTapped() {
-    print('Navigate to Vaccination Screen (to be implemented)');
+  void _onVaccinationTapped(context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => VaccinationLogScreen(babyId: '13')),
+    );
   }
 
   @override
@@ -159,7 +163,7 @@ class HealthScreen extends StatelessWidget {
                         ),
                         // Vaccination Option
                         GestureDetector(
-                          onTap: _onVaccinationTapped,
+                          onTap: () => _onVaccinationTapped(context),
                           child: Container(
                             padding: const EdgeInsets.all(16.0),
                             decoration: BoxDecoration(

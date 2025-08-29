@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'healthcare_dashboard_screen.dart';
-import 'weight_graph_screen.dart'; // Import the weight graph screen (can be reused or replaced with height graph if needed)
+import 'height_graph_screen.dart'; // Import the weight graph screen (can be reused or replaced with height graph if needed)
 
 class HealthcareHeightScreen extends StatefulWidget {
   final String babyId; // Added to receive babyId from HealthcareDashboardScreen
@@ -336,7 +336,7 @@ class _HeightTrackingScreenState extends State<HealthcareHeightScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => WeightGraphScreen(babyId: widget.babyId),
+        builder: (context) => HeightGraphScreen(babyId: widget.babyId),
       ),
     );
   },

@@ -1,10 +1,77 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'healthcare_dashboard_screen.dart';
 import 'page3.dart'; // Assume this is the login screen widget
-import 'package:firebase_auth/firebase_auth.dart';
 
-class BabyListPage extends StatelessWidget {
+class BabyListPage extends StatefulWidget {
   const BabyListPage({super.key});
+
+  @override
+  State<BabyListPage> createState() => _BabyListPageState();
+}
+
+class _BabyListPageState extends State<BabyListPage> {
+  List<String> _babyNames = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchBabyNames();
+  }
+
+  Future<void> _fetchBabyNames() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        final hpEmail = user.email;
+        String hpFullName;
+        switch (hpEmail) {
+          case 'asela@gmail.com':
+            hpFullName = 'Dr Asela Athukorala';
+            break;
+          case 'amalka@gmail.com':
+            hpFullName = 'Dr Amalka Perera';
+            break;
+          case 'saman@gmail.com':
+            hpFullName = 'Dr Saman Perera';
+            break;
+          default:
+            hpFullName = '';
+        }
+        if (hpFullName.isNotEmpty) {
+          final snapshot =
+              await FirebaseFirestore.instance
+                  .collection('parent-HP connections')
+                  .where('hpName', isEqualTo: hpFullName)
+                  .get();
+          setState(() {
+            _babyNames =
+                snapshot.docs.map((doc) => doc['babyName'] as String).toList();
+            _isLoading = false;
+          });
+        } else {
+          setState(() {
+            _babyNames = ['No babies assigned'];
+            _isLoading = false;
+          });
+        }
+      }
+    } catch (e) {
+      print('Error fetching baby names: $e');
+      setState(() {
+        _babyNames = ['Error loading babies'];
+        _isLoading = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load baby names: $e')));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -108,107 +175,71 @@ class BabyListPage extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Baby1 Option
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => HealthcareDashboardScreen(
-                                      babyId: "Baby 1",
+                        if (_isLoading)
+                          const Center(child: CircularProgressIndicator())
+                        else if (_babyNames.isEmpty ||
+                            _babyNames[0].startsWith('Error') ||
+                            _babyNames[0].startsWith('No'))
+                          const Padding(
+                            padding: EdgeInsets.all(16.0),
+                            child: Text(
+                              'No babies assigned or error occurred',
+                              style: TextStyle(fontSize: 16),
+                            ),
+                          )
+                        else
+                          ..._babyNames.map((babyName) {
+                            return GestureDetector(
+                              onTap: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => HealthcareDashboardScreen(
+                                          babyId: babyName,
+                                        ),
+                                  ),
+                                );
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16.0),
+                                margin: const EdgeInsets.only(bottom: 20.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withAlpha(51),
+                                      spreadRadius: 2,
+                                      blurRadius: 5,
+                                      offset: const Offset(0, 3),
                                     ),
+                                  ],
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.child_care,
+                                      color: Color(0xFF6A5ACD),
+                                      size: 40,
+                                    ),
+                                    const SizedBox(width: 20),
+                                    Text(
+                                      babyName,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            margin: const EdgeInsets.only(bottom: 20.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withAlpha(51),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.child_care,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  "Baby 1",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        // Baby2 Option
-                        GestureDetector(
-                          onTap: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder:
-                                    (context) => HealthcareDashboardScreen(
-                                      babyId: "Baby 2",
-                                    ),
-                              ),
-                            );
-                          },
-
-                          child: Container(
-                            padding: const EdgeInsets.all(16.0),
-                            margin: const EdgeInsets.only(bottom: 20.0),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.grey.withAlpha(51),
-                                  spreadRadius: 2,
-                                  blurRadius: 5,
-                                  offset: const Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.child_friendly,
-                                  color: Color(0xFF6A5ACD),
-                                  size: 40,
-                                ),
-                                const SizedBox(width: 20),
-                                const Text(
-                                  "Baby 2",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                          }).toList(),
                       ],
                     ),
                   ),
-                  const SizedBox(
-                    height: 300,
-                  ), // Reduced height to accommodate button
+                  const SizedBox(height: 300),
                 ],
               ),
             ),
@@ -217,7 +248,7 @@ class BabyListPage extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(50.0),
-        color:  Color.fromARGB(255, 247, 220, 203),
+        color: const Color.fromARGB(255, 247, 220, 203),
         child: ElevatedButton(
           onPressed: () {
             FirebaseAuth.instance.signOut();
